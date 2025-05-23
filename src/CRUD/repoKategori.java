@@ -1,5 +1,5 @@
-package repository;
-import dashboard.kategori;
+package CRUD;
+import Logic.kategori;
 import java.util.ArrayList;
 import java.util.List;
 

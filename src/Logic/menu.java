@@ -1,4 +1,4 @@
-package dashboard;
+package Logic;
 
 public class menu {
     private int id;

@@ -1,4 +1,4 @@
-package displayDashboard;
+package View;
 
 public class panelPayment {
 }

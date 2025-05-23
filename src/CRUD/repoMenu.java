@@ -1,6 +1,6 @@
-package repository;
-import dashboard.kategori;
-import dashboard.menu;
+package CRUD;
+import Logic.kategori;
+import Logic.menu;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +14,6 @@ public class repoMenu {
     }
 
     public void addMenu(String nama, double harga, kategori kategori){
-        listMenu.add(new menu(id++, nama, harga, kategori))
+        listMenu.add(new menu(id++, nama, harga, kategori));
     }
 }

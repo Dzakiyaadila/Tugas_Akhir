@@ -1,4 +1,4 @@
-package dashboard;
+package Logic;
 
 import java.time.LocalDateTime;
 
