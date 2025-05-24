@@ -1,97 +1,59 @@
-//package displayDashboard;
-//
-//import javax.swing.*;
-//import java.awt.*;
-//
-//public class mainFrame {
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> {
-//            new loginFrame().setVisible(true);
-//            // Buat frame utama sebagai container
-//            JFrame mainFrame = new JFrame("Canteen System");
-//            mainFrame.setSize(1000, 700);
-//            mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//
-//            // CardLayout untuk switch antar panel
-//            CardLayout cardLayout = new CardLayout();
-//            JPanel containerPanel = new JPanel(cardLayout);
-//
-//            // Buat semua komponen GUI
-//            loginFrame loginPanel = new loginFrame();
-//
-//            panelDashboard dashboardPanel = new panelDashboard();
-//            panelSupplier supplierPanel = new panelSupplier();
-//
-//            // Tambahkan semua panel ke container
-//            containerPanel.add(loginPanel, "LOGIN");
-//            containerPanel.add(dashboardPanel, "DASHBOARD");
-//            containerPanel.add(supplierPanel, "SUPPLIER");
-//
-//            // Tampilkan login pertama kali
-//            cardLayout.show(containerPanel, "LOGIN");
-//
-//            mainFrame.add(containerPanel);
-//            mainFrame.setLocationRelativeTo(null);
-//            mainFrame.setVisible(true);
-//        });
-//    }
-//
-//}
-
-//
-//package displayDashboard;
-//
-//import javax.swing.*;
-//import java.awt.*;
-//import java.awt.event.ActionEvent;
-//
-//
-//
-//public class mainFrame {
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> {
-//            loginFrame loginFrame = new loginFrame();
-//
-//            // Hanya buat SATU JFrame utama
-//            JFrame mainFrame = new JFrame("Canteen System");
-//            mainFrame.setSize(1000, 700);
-//            mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//
-//            // CardLayout sebagai navigator
-//            CardLayout cardLayout = new CardLayout();
-//            JPanel containerPanel = new JPanel(cardLayout);
-//
-//            // Inisialisasi semua panel
-//            loginFrame loginPanel = new loginFrame();
-//            panelDashboard dashboardPanel = new panelDashboard();
-//            panelSupplier supplierPanel = new panelSupplier();
-//
-//            // Tambahkan ke container dengan ID unik
-//            containerPanel.add(loginPanel, "LOGIN");
-//            containerPanel.add(dashboardPanel, "DASHBOARD");
-//            containerPanel.add(supplierPanel, "SUPPLIER");
-//
-//            // Mulai dengan panel login
-//            cardLayout.show(containerPanel, "LOGIN");
-//
-//            mainFrame.add(containerPanel);
-//            mainFrame.setLocationRelativeTo(null);
-//            mainFrame.setVisible(true);
-//        });
-//    }
-//}
-
-
-
-
 package View;
 
-import javax.swing.*;
 
-public class mainFrame {
+import View.panelKasir.panelKasir;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class mainFrame extends JFrame {
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cardLayout);
+
+    public mainFrame() {
+        // Konfigurasi dasar frame
+        setTitle("Canteen Management System");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setMinimumSize(new Dimension(1000, 700));
+        setLocationRelativeTo(null);
+
+        // Inisialisasi panel
+        initializePanels();
+
+        // Set layout utama
+        getContentPane().add(cardPanel, BorderLayout.CENTER);
+
+        // Tampilkan dashboard pertama kali
+        showDashboard();
+    }
+
+    private void initializePanels() {
+        // Tambahkan semua panel dengan konsisten
+        cardPanel.add(new panelDashboard(this, cardLayout, cardPanel), "DASHBOARD");
+        cardPanel.add(new panelMenu(this), "MENU");
+        cardPanel.add(new panelKategori(this), "CATEGORY");
+        cardPanel.add(new panelSupplier(), "SUPPLIER");
+        cardPanel.add(new panelPayment(), "PAYMENT");
+        cardPanel.add(new panelKasir(), "KASIR");
+    }
+
+    public void showDashboard() {
+        cardLayout.show(cardPanel, "DASHBOARD");
+    }
+
+    public void showPanel(String panelName) {
+        cardLayout.show(cardPanel, panelName.toUpperCase());
+    }
+
+    public void logout() {
+        // Implementasi logout
+        this.dispose();
+        new loginFrame().setVisible(true);
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new loginFrame(); // Langsung buka dashboard
+            new mainFrame().setVisible(true);
         });
     }
 }

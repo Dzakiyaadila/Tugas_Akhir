@@ -1,143 +1,95 @@
-//package View;
-//
-//import javax.swing.*;
-//import javax.swing.table.DefaultTableModel;
-//import java.awt.*;
-//import java.awt.event.ActionEvent;
-//
-//public class panelMenu extends JPanel {
-//    private DefaultTableModel tableModel;
-//    private JTable table;
-//    private String[] categories;
-//    private String[] suppliers;
-//
-//    public panelMenu(String[] categories, String[] suppliers) {
-//        this.categories = categories;
-//        this.suppliers = suppliers;
-//        setLayout(new BorderLayout(10, 10));
-//
-//        // Tabel
-//        tableModel = new DefaultTableModel(new Object[]{"ID", "Nama", "Kategori", "Harga", "Supplier"}, 0);
-//        table = new JTable(tableModel);
-//        table.setRowHeight(30);
-//
-//        // Toolbar
-//        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-//        JButton addButton = new JButton("Tambah");
-//        addButton.setBackground(new Color(76, 175, 80));
-//        addButton.setForeground(Color.WHITE);
-//        addButton.addActionListener(this::showAddDialog);
-//
-//        toolbar.add(addButton);
-//
-//        // Layout
-//        add(new JScrollPane(table), BorderLayout.CENTER);
-//        add(toolbar, BorderLayout.NORTH);
-//
-//        loadDummyData();
-//    }
-//
-//    private void loadDummyData() {
-//        tableModel.addRow(new Object[]{1, "Nasi Goreng", "Makanan", 25000, "Supplier A"});
-//        tableModel.addRow(new Object[]{2, "Es Teh", "Minuman", 5000, "Supplier B"});
-//    }
-//
-//    private void showAddDialog(ActionEvent e) {
-//        JTextField nameField = new JTextField();
-//        JComboBox<String> categoryCombo = new JComboBox<>(categories);
-//        JTextField priceField = new JTextField();
-//        JComboBox<String> supplierCombo = new JComboBox<>(suppliers);
-//
-//        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
-//        panel.add(new JLabel("Nama Menu:"));
-//        panel.add(nameField);
-//        panel.add(new JLabel("Kategori:"));
-//        panel.add(categoryCombo);
-//        panel.add(new JLabel("Harga:"));
-//        panel.add(priceField);
-//        panel.add(new JLabel("Supplier:"));
-//        panel.add(supplierCombo);
-//
-//        int result = JOptionPane.showConfirmDialog(
-//                this, panel, "Tambah Menu",
-//                JOptionPane.OK_CANCEL_OPTION
-//        );
-//
-//        if (result == JOptionPane.OK_OPTION) {
-//            tableModel.addRow(new Object[]{
-//                    tableModel.getRowCount() + 1,
-//                    nameField.getText(),
-//                    categoryCombo.getSelectedItem(),
-//                    Integer.parseInt(priceField.getText()),
-//                    supplierCombo.getSelectedItem()
-//            });
-//        }
-//    }
-//}
-
 package View;
+
+import View.mainFrame;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-//import View.kategoriDialog;
 
 public class panelMenu extends JPanel {
-    private mainFrame mainFrame;
     private JTable menuTable;
     private DefaultTableModel tableModel;
-    private CategorySelectionDialog kategoriDialog;
-    private MenuFormDialog menuDialog;
+    private final mainFrame mainAppFrame;  // Untuk navigasi
 
-    public panelMenu(mainFrame mainFrame) {
-        this.mainFrame = mainFrame;
+    public panelMenu(mainFrame mainAppFrame) {
+        this.mainAppFrame = mainAppFrame;
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
-        // 1. Header
+        // 1. Header Panel
+        add(createHeaderPanel(), BorderLayout.NORTH);
+
+        // 2. Table Panel
+        setupMenuTable();
+
+        // 3. Action Panel
+        add(createActionPanel(), BorderLayout.SOUTH);
+    }
+
+    private JPanel createHeaderPanel() {
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(0, 120, 215));
+        headerPanel.setPreferredSize(new Dimension(getWidth(), 60));
+
+        // Title
         JLabel titleLabel = new JLabel("DAILY MENUS", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
 
-        // 2. Tabel Menu
-        String[] columns = {"NO", "NAMA MENU", "KATEGORI", "HARGA", "STOK", "SUPPLIER", "AKSI"};
-        tableModel = new DefaultTableModel(columns, 0);
-        menuTable = new JTable(tableModel);
-        customizeTable();
-        add(new JScrollPane(menuTable), BorderLayout.CENTER);
+        // Back Button
+        JButton backButton = new JButton("← Back");
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        backButton.setBackground(new Color(0, 120, 215));
+        backButton.setForeground(Color.WHITE);
+        backButton.setBorderPainted(false);
+        backButton.addActionListener(e -> mainAppFrame.showPanel("DASHBOARD"));
+        headerPanel.add(backButton, BorderLayout.WEST);
 
-        // 3. Panel Aksi
-        JPanel actionPanel = new JPanel(new BorderLayout());
-        actionPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        // Search Panel
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JTextField searchField = new JTextField(20);
-        JButton searchButton = new JButton("Cari");
-        searchPanel.add(new JLabel("Search menu:"));
-        searchPanel.add(searchField);
-        searchPanel.add(searchButton);
-
-        // Add Button
-        JButton addButton = new JButton("Tambah Menu");
-        addButton.addActionListener(this::showAddMenuDialog);
-
-        actionPanel.add(searchPanel, BorderLayout.WEST);
-        actionPanel.add(addButton, BorderLayout.EAST);
-        add(actionPanel, BorderLayout.SOUTH);
-
-        // Load sample data
-        loadSampleData();
+        return headerPanel;
     }
 
-    private void customizeTable() {
+    private void setupMenuTable() {
+        String[] columns = {"NO", "NAMA MENU", "KATEGORI", "HARGA", "STOK", "SUPPLIER", "AKSI"};
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 6; // Hanya kolom AKSI editable
+            }
+        };
+
+        menuTable = new JTable(tableModel);
+        customizeTableAppearance();
+        addActionButtonsToTable();
+        addContohData();
+    }
+
+    private void customizeTableAppearance() {
         menuTable.setRowHeight(40);
         menuTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        menuTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        menuTable.setShowGrid(false);
+        menuTable.setIntercellSpacing(new Dimension(0, 0));
+
+        JTableHeader header = menuTable.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        header.setBackground(new Color(0, 120, 215));
+        header.setForeground(Color.WHITE);
+
+        JScrollPane scrollPane = new JScrollPane(menuTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        add(scrollPane, BorderLayout.CENTER);
     }
 
-    private void loadSampleData() {
+    private void addActionButtonsToTable() {
+        // Kolom Aksi
+        menuTable.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
+        menuTable.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
+    }
+
+    private void addContohData() {
         Object[][] data = {
                 {1, "Nasi Goreng", "Makanan", 25000, 50, "Andi Kuniawan", "✏️ 🗑️"},
                 {2, "Es Teh", "Minuman", 8000, 100, "Budi Raharja", "✏️ 🗑️"}
@@ -148,91 +100,167 @@ public class panelMenu extends JPanel {
         }
     }
 
+    private JPanel createActionPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        panel.setBackground(new Color(240, 240, 240));
+
+        // Search Panel
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField searchField = new JTextField(20);
+        JButton searchButton = new JButton("Cari");
+        searchPanel.add(new JLabel("Search:"));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+
+        // Add Button
+        JButton addButton = new JButton("Tambah Menu");
+        styleAddButton(addButton);
+
+        panel.add(searchPanel, BorderLayout.WEST);
+        panel.add(addButton, BorderLayout.EAST);
+        return panel;
+    }
+
+    private void styleAddButton(JButton button) {
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(new Color(0, 180, 120));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.addActionListener(this::showAddMenuDialog);
+    }
+
     private void showAddMenuDialog(ActionEvent e) {
-        // Buka dialog pilih kategori terlebih dahulu
-        kategoriDialog categoryDialog = new kategoriDialog();
-        categoryDialog.setVisible(true);
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Tambah Menu Baru");
+        dialog.setSize(400, 350);
+        dialog.setModal(true);
+        dialog.setLocationRelativeTo(this);
 
-        if (categoryDialog.getSelectedCategory() != null) {
-            // Lanjut ke form tambah menu
-            menuDialog = new MenuFormDialog(kategoriDialog.getSelectedCategory());
-            menuDialog.setVisible(true);
+        // Form Panel
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-            if (menuDialog.isSubmitted()) {
-                // Tambahkan ke tabel
+        // Form Components
+        formPanel.add(new JLabel("Nama Menu:"));
+        JTextField nameField = new JTextField();
+        formPanel.add(nameField);
+
+        formPanel.add(new JLabel("Kategori:"));
+        JComboBox<String> categoryCombo = new JComboBox<>(new String[]{"Makanan", "Minuman"});
+        formPanel.add(categoryCombo);
+
+        formPanel.add(new JLabel("Harga (Rp):"));
+        JTextField priceField = new JTextField();
+        formPanel.add(priceField);
+
+        formPanel.add(new JLabel("Stok:"));
+        JTextField stockField = new JTextField();
+        formPanel.add(stockField);
+
+        // Submit Button
+        JButton submitButton = new JButton("Simpan");
+        submitButton.addActionListener(ev -> {
+            try {
                 tableModel.addRow(new Object[]{
                         tableModel.getRowCount() + 1,
-                        menuDialog.getMenuName(),
-                        menuDialog.getCategory(),
-                        menuDialog.getPrice(),
-                        menuDialog.getStock(),
-                        "Supplier A", // Ambil dari relasi kategori-supplier
+                        nameField.getText(),
+                        categoryCombo.getSelectedItem(),
+                        Integer.parseInt(priceField.getText()),
+                        Integer.parseInt(stockField.getText()),
+                        "Supplier Default",
                         "✏️ 🗑️"
                 });
+                dialog.dispose();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Harga dan Stok harus angka!", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        }
-    }
-    public class CategorySelectionDialog extends JDialog {
-        private String selectedCategory;
+        });
 
-        // Method yang diperlukan
-        public String getSelectedCategory() {
-            return selectedCategory;
-        }
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(submitButton, BorderLayout.SOUTH);
+        dialog.setVisible(true);
     }
 
-    public class MenuFormDialog extends JDialog {
-        private String category;
-        private String menuName;
-        private int price;
-        private int stock;
-        private boolean submitted = false;
-
-        // Constructor dengan parameter kategori
-        public MenuFormDialog(String category) {
-            this.category = category;
-            setTitle("Tambah Menu - Kategori: " + category);
-            setSize(350, 250);
-            setupForm();
+    // Custom Renderer untuk Tombol Aksi
+    private static class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
         }
 
-        private void setupForm() {
-            JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setText((value == null) ? "" : value.toString());
+            return this;
+        }
+    }
 
-            JTextField nameField = new JTextField();
-            JTextField priceField = new JTextField();
-            JTextField stockField = new JTextField();
+    // Custom Editor untuk Tombol Aksi
+    private class ButtonEditor extends DefaultCellEditor {
+        private String label;
+        private JPanel panel;
+        private JButton editButton;
+        private JButton deleteButton;
 
-            panel.add(new JLabel("Nama Menu:"));
-            panel.add(nameField);
-            panel.add(new JLabel("Harga:"));
-            panel.add(priceField);
-            panel.add(new JLabel("Stok:"));
-            panel.add(stockField);
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+            editButton = new JButton("✏️");
+            deleteButton = new JButton("🗑️");
 
-            JButton submitBtn = new JButton("Simpan");
-            submitBtn.addActionListener(e -> {
-                this.menuName = nameField.getText();
-                this.price = Integer.parseInt(priceField.getText());
-                this.stock = Integer.parseInt(stockField.getText());
-                this.submitted = true;
-                dispose();
+            editButton.addActionListener(e -> {
+                int row = menuTable.getSelectedRow();
+                if (row != -1) {
+                    editMenu(row);
+                }
+                fireEditingStopped();
             });
 
-            add(panel, BorderLayout.CENTER);
-            add(submitBtn, BorderLayout.SOUTH);
+            deleteButton.addActionListener(e -> {
+                int row = menuTable.getSelectedRow();
+                if (row != -1) {
+                    deleteMenu(row);
+                }
+                fireEditingStopped();
+            });
+
+            panel.add(editButton);
+            panel.add(deleteButton);
         }
 
-        // Getter methods
-        public boolean isSubmitted() { return submitted; }
-        public String getMenuName() { return menuName; }
-        public String getCategory() { return category; }
-        public int getPrice() { return price; }
-        public int getStock() { return stock; }
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            label = (value == null) ? "" : value.toString();
+            return panel;
+        }
+
+        public Object getCellEditorValue() {
+            return label;
+        }
     }
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> {
-//            new panelMenu().setVisible(true);
-//        });
-//    }
+
+    private void editMenu(int row) {
+        // Implementasi edit menu
+        JOptionPane.showMessageDialog(this,
+                "Edit menu: " + tableModel.getValueAt(row, 1),
+                "Edit Menu",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void deleteMenu(int row) {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Hapus menu " + tableModel.getValueAt(row, 1) + "?",
+                "Konfirmasi",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            tableModel.removeRow(row);
+        }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(1000, 600);
+    }
 }

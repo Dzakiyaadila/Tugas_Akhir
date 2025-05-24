@@ -1,17 +1,18 @@
 package View;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class kategoriDialog extends JDialog {
-    private JList<String> categoryList;
     private String selectedCategory;
+    private JList<String> categoryList;
 
     public kategoriDialog() {
         setTitle("Pilih Kategori");
-        setSize(300, 400);
+        setSize(300, 300);
         setModal(true);
+        setLocationRelativeTo(null);
 
-        // Data dummy kategori
         DefaultListModel<String> listModel = new DefaultListModel<>();
         listModel.addElement("Makanan");
         listModel.addElement("Minuman");
