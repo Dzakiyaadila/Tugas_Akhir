@@ -1,13 +1,14 @@
 package View.panelKasir;
 
+import Logic.MenuItem;
+import Logic.MenuUtil;
 import Logic.transaksiDetail;
 import View.mainFrame;
+
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.border.EmptyBorder;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -61,6 +62,7 @@ public class panelKasir extends JPanel {
         return panel;
     }
 
+    // ⬇️ SUDAH DIUBAH AGAR MENGAMBIL DARI menu_data.csv
     private JPanel createMenuPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Menu Tersedia"));
@@ -68,59 +70,67 @@ public class panelKasir extends JPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
-        String[] categories = {"All Items", "Food", "Drink", "Snack"};
-        int[] itemCounts = {5, 2, 1, 2};
+        List<MenuItem> allMenus = MenuUtil.loadMenuFromCSV("menu_data.csv");
 
-        for (int i = 0; i < categories.length; i++) {
-            JPanel categoryPanel = new JPanel(new GridLayout(0, 3, 10, 10));
-            categoryPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        Map<String, JPanel> categoryPanels = new LinkedHashMap<>();
+        categoryPanels.put("All Items", new JPanel(new GridLayout(0, 3, 10, 10)));
 
-            String[][] sampleItems = {
-                    {"PENSIL", "2000", "100"},
-                    {"Aqua", "12000", "10"},
-                    {"Sosis", "8000", "9"},
-                    {"Chocolatos", "1500", "20"},
-                    {"Susu", "8800", "5"}
-            };
+        for (MenuItem menu : allMenus) {
+            categoryPanels.putIfAbsent(menu.getKategori(), new JPanel(new GridLayout(0, 3, 10, 10)));
 
-            for (String[] item : sampleItems) {
-                JPanel itemPanel = createMenuItemPanel(item);
-                categoryPanel.add(itemPanel);
-            }
+            // buat panel untuk kategori spesifik
+            JPanel itemPanelForCategory = createMenuItemPanel(menu);
+            categoryPanels.get(menu.getKategori()).add(itemPanelForCategory);
 
-            JScrollPane scrollPane = new JScrollPane(categoryPanel);
-            tabbedPane.addTab(categories[i] + " (" + itemCounts[i] + ")", scrollPane);
+            // buat panel untuk "All Items" juga (harus panel baru, bukan reuse yang tadi)
+            JPanel itemPanelForAll = createMenuItemPanel(menu);
+            categoryPanels.get("All Items").add(itemPanelForAll);
+        }
+
+
+
+        for (Map.Entry<String, JPanel> entry : categoryPanels.entrySet()) {
+            JScrollPane scrollPane = new JScrollPane(entry.getValue());
+            entry.getValue().setBorder(new EmptyBorder(10, 10, 10, 10));
+            tabbedPane.addTab(entry.getKey(), scrollPane);
         }
 
         panel.add(tabbedPane, BorderLayout.CENTER);
         return panel;
     }
 
-    private JPanel createMenuItemPanel(String[] itemData) {
+    private JPanel createMenuItemPanel(MenuItem item) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.setBackground(Color.WHITE);
         panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        JLabel nameLabel = new JLabel(itemData[0]);
+        JLabel nameLabel = new JLabel(item.getNama());
         nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
         nameLabel.setBorder(new EmptyBorder(10, 10, 5, 10));
         panel.add(nameLabel, BorderLayout.NORTH);
 
         JPanel infoPanel = new JPanel(new GridLayout(0, 1));
-        JLabel priceLabel = new JLabel("Harga: Rp " + itemData[1]);
-        JLabel stockLabel = new JLabel("Stok: " + itemData[2] + " unit");
+        JLabel priceLabel = new JLabel("Harga: Rp " + item.getHarga());
+        JLabel stockLabel = new JLabel("Stok: " + item.getStok() + " unit");
         infoPanel.add(priceLabel);
         infoPanel.add(stockLabel);
         panel.add(infoPanel, BorderLayout.CENTER);
 
         JButton addButton = new JButton("+ Tambah");
         styleButton(addButton, new Color(0, 180, 120), Color.WHITE);
-        addButton.addActionListener(e -> addToOrder(itemData));
-        panel.add(addButton, BorderLayout.SOUTH);
+        addButton.addActionListener(e -> {
+            addToOrder(new String[]{
+                    item.getNama(),
+                    String.valueOf(item.getHarga()),
+                    String.valueOf(item.getStok())
+            });
+        });
 
+        panel.add(addButton, BorderLayout.SOUTH);
         return panel;
     }
+
 
     private JPanel createOrderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -222,10 +232,7 @@ public class panelKasir extends JPanel {
             return;
         }
 
-        int total = 0;
-        for (OrderItem oi : currentOrder) {
-            total += oi.getHarga() * oi.getJumlah();
-        }
+        int total = currentOrder.stream().mapToInt(oi -> oi.getHarga() * oi.getJumlah()).sum();
 
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Total: Rp " + total +
@@ -236,7 +243,6 @@ public class panelKasir extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             saveTransaction(paymentMethod);
             JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-
             resetOrder();
         }
     }
@@ -245,27 +251,16 @@ public class panelKasir extends JPanel {
         String waktu = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int total = currentOrder.stream().mapToInt(oi -> oi.getHarga() * oi.getJumlah()).sum();
 
-        // buat list transaksiDetail
         List<transaksiDetail> detailList = new ArrayList<>();
         for (OrderItem oi : currentOrder) {
-            detailList.add(new Logic.transaksiDetail(
-                    oi.getNama(),
-                    oi.getJumlah(),
-                    oi.getHarga() * oi.getJumlah()
-            ));
+            detailList.add(new transaksiDetail(oi.getNama(), oi.getJumlah(), oi.getHarga() * oi.getJumlah()));
         }
 
-        // buat objek transaksi
-        int userId = 1; // ini contoh, bisa kamu ambil dari sesi login
-        double totalDouble = (double) total;
+        int userId = 1; // kamu bisa ganti ini sesuai sesi login
+        Logic.transaksi trx = new Logic.transaksi(userId, (double) total, metode, detailList);
 
-        Logic.transaksi trx = new Logic.transaksi(userId, totalDouble, metode, detailList);
-
-
-        // panggil CSVUtil
         Logic.CSVUtil.simpanTransaksi(trx);
     }
-
 
     private JPanel createFooterPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -278,4 +273,20 @@ public class panelKasir extends JPanel {
         panel.add(resetButton);
         return panel;
     }
+
+    public void refreshMenuPanel() {
+        remove(menuPanel); // hapus panel lama
+        menuPanel = createMenuPanel(); // buat ulang panel baru
+
+        // ambil SplitPane dan ganti komponen kiri-nya
+        Component comp = getComponent(1);
+        if (comp instanceof JSplitPane splitPane) {
+            splitPane.setLeftComponent(menuPanel);
+        }
+
+        revalidate();
+        repaint();
+    }
+
+
 }
