@@ -62,7 +62,7 @@ public class mainFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new mainFrame().setVisible(true);
+            new loginFrame().setVisible(true);
         });
     }
 }
