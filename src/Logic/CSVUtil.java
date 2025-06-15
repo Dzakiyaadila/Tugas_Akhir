@@ -8,7 +8,7 @@ import java.util.List;
 
 public class CSVUtil {
 
-    private static final String TRANSAKSI_FILE = "transaksi.csv";
+    private static final String TRANSAKSI_FILE = "data/transaksi.csv";
 
     public static void simpanTransaksi(transaksi trx) {
         try (FileWriter writer = new FileWriter(TRANSAKSI_FILE, true)) {
