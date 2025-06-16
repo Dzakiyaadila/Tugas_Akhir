@@ -6,24 +6,35 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.util.Vector;
+import java.util.stream.Collectors;
+import java.util.List;
+import Logic.menu;
+import Logic.kategori;
+import Logic.supplier;
+import CRUD.repoMenu;
+import CRUD.repoKategori;
+import CRUD.repoSupplier;
 
 public class panelMenu extends JPanel {
     private JTable menuTable;
     private DefaultTableModel tableModel;
-    private final String csvFilePath = "menu_data.csv"; // File CSV
     private final mainFrame mainAppFrame;
+    private repoMenu menuRepo;
+    private repoKategori kategoriRepo;
+    private repoSupplier supplierRepo;
 
-    public panelMenu(mainFrame mainAppFrame) {
+    public panelMenu(mainFrame mainAppFrame, repoMenu menuRepo, repoKategori kategoriRepo, repoSupplier supplierRepo) {
         this.mainAppFrame = mainAppFrame;
+        this.menuRepo = menuRepo;
+        this.kategoriRepo = kategoriRepo;
+        this.supplierRepo = supplierRepo;
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         setupMenuTable();
         add(createActionPanel(), BorderLayout.SOUTH);
-//        loadMenuFromCSV();
+        refreshMenuData();
     }
 
     private JPanel createHeaderPanel() {
@@ -48,10 +59,10 @@ public class panelMenu extends JPanel {
     }
 
     private void setupMenuTable() {
-        String[] columns = {"NO", "NAMA MENU", "KATEGORI", "HARGA", "STOK", "SUPPLIER", "AKSI"};
+        String[] columns = {"NO", "ID", "NAMA MENU", "KATEGORI", "HARGA", "STOK", "SUPPLIER", "AKSI"};
         tableModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int column) {
-                return column == 6;
+                return column == 7;
             }
         };
         menuTable = new JTable(tableModel);
@@ -68,60 +79,30 @@ public class panelMenu extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         addActionButtonsToTable();
-
-        loadMenuFromCSV();
     }
 
-    private void loadMenuFromCSV() {
+    public void refreshMenuData() {
         tableModel.setRowCount(0);
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
-            String line;
-            int no = 1;
-            while ((line = reader.readLine()) != null) {
-                String[] data = line.split(";");
-                if (data.length >= 5) {
-                    tableModel.addRow(new Object[]{
-                            no++, data[0], data[1], Integer.parseInt(data[2]),
-                            Integer.parseInt(data[3]), data[4], "✏️ 🗑️"
-                    });
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Gagal membaca file CSV: " + e.getMessage());
+        List<menu> allMenus = menuRepo.getListMenu();
+
+        int no = 1;
+        for (menu m : allMenus) {
+            tableModel.addRow(new Object[]{
+                    no++,
+                    m.getId(),
+                    m.getNama(),
+                    m.getKategori().getNama(),
+                    m.getHarga(),
+                    m.getStok(),
+                    m.getSupplier(),
+                    "✏️ 🗑️"
+            });
         }
     }
-    private void saveTableToCSV() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFilePath))) {
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                String line = tableModel.getValueAt(i, 1) + ";" +  // Nama Menu
-                        tableModel.getValueAt(i, 2) + ";" +  // Kategori
-                        tableModel.getValueAt(i, 3) + ";" +  // Harga
-                        tableModel.getValueAt(i, 4) + ";" +  // Stok
-                        tableModel.getValueAt(i, 5);         // Supplier
-                writer.write(line);
-                writer.newLine(); // Ganti baris
-            }
-            writer.flush(); // pastikan ditulis ke file sebelum refresh
-
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Gagal menyimpan data ke file CSV:\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            return; // keluar dari fungsi supaya tidak coba refresh
-        }
-
-        // Refresh panelKasir setelah data berhasil disimpan
-        mainFrame frame = (mainFrame) SwingUtilities.getWindowAncestor(this);
-        if (frame.getKasirPanel() != null) {
-            frame.getKasirPanel().refreshMenuPanel();
-        }
-    }
-
-
-
-
 
     private void addActionButtonsToTable() {
-        menuTable.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
-        menuTable.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
+        menuTable.getColumnModel().getColumn(7).setCellRenderer(new ButtonRenderer());
+        menuTable.getColumnModel().getColumn(7).setCellEditor(new ButtonEditor(new JCheckBox()));
     }
 
     private JPanel createActionPanel() {
@@ -156,32 +137,47 @@ public class panelMenu extends JPanel {
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JTextField nameField = new JTextField();
-        JComboBox<String> categoryCombo = new JComboBox<>(new String[]{"Makanan", "Minuman"});
+        List<kategori> categories = kategoriRepo.getCategories();
+        String[] categoryNames = categories.stream().map(k -> k.getNama()).toArray(String[]::new);
+        JComboBox<String> categoryCombo = new JComboBox<>(categoryNames);
         JTextField priceField = new JTextField();
         JTextField stockField = new JTextField();
-        JTextField supplierField = new JTextField();
+        List<supplier> suppliers = supplierRepo.getSuppliers(); // ambil daftar supplier dari repoSupplier
+        String[] supplierNames = suppliers.stream()
+                .map(s -> s.getNama())
+                .toArray(String[]::new);
+        JComboBox<String> supplierCombo = new JComboBox<>(supplierNames);
 
         formPanel.add(new JLabel("Nama Menu:")); formPanel.add(nameField);
         formPanel.add(new JLabel("Kategori:")); formPanel.add(categoryCombo);
         formPanel.add(new JLabel("Harga (Rp):")); formPanel.add(priceField);
         formPanel.add(new JLabel("Stok:")); formPanel.add(stockField);
-        formPanel.add(new JLabel("Supplier:")); formPanel.add(supplierField);
+        formPanel.add(new JLabel("Supplier:")); formPanel.add(supplierCombo);
 
         JButton submitButton = new JButton("Simpan");
         submitButton.addActionListener(ev -> {
             try {
-                Object[] row = {
-                        tableModel.getRowCount() + 1,
-                        nameField.getText(),
-                        categoryCombo.getSelectedItem(),
-                        Integer.parseInt(priceField.getText()),
-                        Integer.parseInt(stockField.getText()),
-                        supplierField.getText(),
-                        "✏️ 🗑️"
-                };
-                tableModel.addRow(row);
-                saveTableToCSV();
-                dialog.dispose();
+                String namaMenu = nameField.getText();
+                String selectedCategoryName = (String) categoryCombo.getSelectedItem();
+                double hargaMenu = Double.parseDouble(priceField.getText());
+                int stokMenu = Integer.parseInt(stockField.getText());
+                String selectedSupplierName = (String) supplierCombo.getSelectedItem();
+
+                kategori selectedKategori = kategoriRepo.getCategories().stream()
+                        .filter(k -> k.getNama().equals(selectedCategoryName))
+                        .findFirst()
+                        .orElse(null);
+
+                if (selectedKategori != null) {
+                    menuRepo.addMenu(namaMenu, hargaMenu, selectedKategori, stokMenu, selectedSupplierName);
+                    refreshMenuData();
+                    dialog.dispose();
+                    // meminta mainframe refresh panelKasir
+                    mainAppFrame.getKasirPanel().refreshMenuPanel();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Kategori tidak valid.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Harga dan Stok harus berupa angka.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -239,18 +235,33 @@ public class panelMenu extends JPanel {
     }
 
     private void editMenu(int row) {
+        int menuId = (int) tableModel.getValueAt(row, 1);
+        menu existingMenu = menuRepo.getMenuById(menuId);
+
+        if (existingMenu == null) {
+            JOptionPane.showMessageDialog(this, "Menu tidak ditemukan.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         JDialog dialog = new JDialog();
         dialog.setTitle("Edit Menu");
         dialog.setSize(400, 350);
         dialog.setModal(true);
         dialog.setLocationRelativeTo(this);
 
-        JTextField nameField = new JTextField(tableModel.getValueAt(row, 1).toString());
-        JComboBox<String> categoryCombo = new JComboBox<>(new String[]{"Makanan", "Minuman"});
-        categoryCombo.setSelectedItem(tableModel.getValueAt(row, 2));
-        JTextField priceField = new JTextField(tableModel.getValueAt(row, 3).toString());
-        JTextField stockField = new JTextField(tableModel.getValueAt(row, 4).toString());
-        JTextField supplierField = new JTextField(tableModel.getValueAt(row, 5).toString());
+        JTextField nameField = new JTextField(existingMenu.getNama());
+        List<kategori> categories = kategoriRepo.getCategories();
+        String[] categoryNames = categories.stream().map(k -> k.getNama()).toArray(String[]::new);
+        JComboBox<String> categoryCombo = new JComboBox<>(categoryNames);
+        categoryCombo.setSelectedItem(existingMenu.getKategori().getNama());
+        JTextField priceField = new JTextField(String.valueOf(existingMenu.getHarga()));
+        JTextField stockField = new JTextField(String.valueOf(existingMenu.getStok()));
+        List<supplier> suppliers = supplierRepo.getSuppliers(); // ambil daftar supplier
+        String[] supplierNames = suppliers.stream()
+                .map(s -> s.getNama())
+                .toArray(String[]::new);
+        JComboBox<String> supplierCombo = new JComboBox<>(supplierNames); // buat JComboBox
+        supplierCombo.setSelectedItem(existingMenu.getSupplier());
 
         JPanel formPanel = new JPanel(new GridLayout(6, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -258,18 +269,32 @@ public class panelMenu extends JPanel {
         formPanel.add(new JLabel("Kategori:")); formPanel.add(categoryCombo);
         formPanel.add(new JLabel("Harga (Rp):")); formPanel.add(priceField);
         formPanel.add(new JLabel("Stok:")); formPanel.add(stockField);
-        formPanel.add(new JLabel("Supplier:")); formPanel.add(supplierField);
+        formPanel.add(new JLabel("Supplier:")); formPanel.add(supplierCombo);
 
         JButton saveButton = new JButton("Simpan Perubahan");
         saveButton.addActionListener(ev -> {
             try {
-                tableModel.setValueAt(nameField.getText(), row, 1);
-                tableModel.setValueAt(categoryCombo.getSelectedItem(), row, 2);
-                tableModel.setValueAt(Integer.parseInt(priceField.getText()), row, 3);
-                tableModel.setValueAt(Integer.parseInt(stockField.getText()), row, 4);
-                tableModel.setValueAt(supplierField.getText(), row, 5);
-                saveTableToCSV();
-                dialog.dispose();
+                String newNama = nameField.getText();
+                String newCategoryName = (String) categoryCombo.getSelectedItem();
+                double newHarga = Double.parseDouble(priceField.getText());
+                int newStok = Integer.parseInt(stockField.getText());
+                String newSupplier = (String) supplierCombo.getSelectedItem();
+
+                kategori newKategori = kategoriRepo.getCategories().stream()
+                        .filter(k -> k.getNama().equals(newCategoryName))
+                        .findFirst()
+                        .orElse(null);
+
+                if (newKategori != null) {
+                    menuRepo.updateMenu(menuId, newNama, newHarga, newKategori, newStok, newSupplier);
+                    refreshMenuData();
+                    dialog.dispose();
+                    // meminta mainframe refresh panelKasir
+                    mainAppFrame.getKasirPanel().refreshMenuPanel();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Kategori tidak valid.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Harga dan Stok harus berupa angka.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -281,11 +306,24 @@ public class panelMenu extends JPanel {
     }
 
     private void deleteMenu(int row) {
-        int confirm = JOptionPane.showConfirmDialog(this, "Hapus menu " + tableModel.getValueAt(row, 1) + "?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+        int menuId = (int) tableModel.getValueAt(row, 1);
+        int confirm = JOptionPane.showConfirmDialog(this, "Hapus menu " + tableModel.getValueAt(row, 2) + "?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            tableModel.removeRow(row);
-            saveTableToCSV();
+            boolean deleted = menuRepo.deleteMenu(menuId);
+            if (deleted) {
+                refreshMenuData();
+                // meminta mainframe refresh panelKasir
+                mainAppFrame.getKasirPanel().refreshMenuPanel();
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menghapus menu.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
+    }
+
+    public void refreshMenuSupplierDropdown() {
+        // dipake buat debugging aja
+        System.out.println("PanelMenu: refreshMenuSupplierDropdown() dipanggil. " +
+                "Dropdown supplier akan diperbarui saat dialog Add/Edit Menu dibuka.");
     }
 
     @Override

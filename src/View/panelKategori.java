@@ -4,25 +4,27 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import CRUD.repoKategori; // Import repoKategori
+import Logic.kategori; // Import Logic.kategori
 
 public class panelKategori extends JPanel {
     private JTable table;
     private DefaultTableModel model;
     private final mainFrame mainAppFrame;
+    private repoKategori kategoriRepo; // Tambahkan ini
 
-    public panelKategori(mainFrame mainAppFrame) {
+    // Ubah konstruktor untuk menerima repoKategori
+    public panelKategori(mainFrame mainAppFrame, repoKategori kategoriRepo) {
         this.mainAppFrame = mainAppFrame;
+        this.kategoriRepo = kategoriRepo; // Inisialisasi repoKategori
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
-        // 1. Header Panel
         add(createHeaderPanel(), BorderLayout.NORTH);
-
-        // 2. Main Content
-        add(createMainPanel(), BorderLayout.CENTER);
-
-        // 3. Footer
+        add(createMainPanel(), BorderLayout.CENTER); // Main panel akan setup tabel
         add(createFooterPanel(), BorderLayout.SOUTH);
+
+        refreshCategoryData(); // Muat data kategori saat inisialisasi
     }
 
     private JPanel createHeaderPanel() {
@@ -30,7 +32,6 @@ public class panelKategori extends JPanel {
         headerPanel.setBackground(new Color(0, 120, 215));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        // Back Button
         JButton backButton = new JButton("← Back");
         backButton.setFont(new Font("Arial", Font.PLAIN, 14));
         backButton.setBackground(new Color(0, 120, 215));
@@ -39,13 +40,11 @@ public class panelKategori extends JPanel {
         backButton.addActionListener(e -> mainAppFrame.showPanel("DASHBOARD"));
         headerPanel.add(backButton, BorderLayout.WEST);
 
-        // Title
         JLabel titleLabel = new JLabel("Categories", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
 
-        // Add Button
         JButton addButton = new JButton("+ Add Category");
         addButton.setFont(new Font("Arial", Font.PLAIN, 14));
         addButton.setBackground(new Color(0, 180, 120));
@@ -61,17 +60,11 @@ public class panelKategori extends JPanel {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         // Table Setup
-        String[] columnNames = {"ID", "KATEGORI", "SUPPLIER", "AKSI"};
-        Object[][] data = {
-                {"1", "MAKANAN", "JAN RODI", "Edit/Hapus"},
-                {"2", "MINUMAN", "AGUS", "Edit/Hapus"},
-                {"3", "ALAT TULIS", "ADIT", "Edit/Hapus"}
-        };
-
-        model = new DefaultTableModel(data, columnNames) {
+        String[] columnNames = {"ID", "KATEGORI", "AKSI"}; // Hapus kolom SUPPLIER sementara
+        model = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 3;
+                return column == 2; // Hanya kolom aksi yang editable
             }
         };
 
@@ -83,24 +76,19 @@ public class panelKategori extends JPanel {
     }
 
     private void customizeTable() {
-        // Table Styling
         table.setRowHeight(40);
         table.setFont(new Font("Arial", Font.PLAIN, 14));
         table.setShowGrid(false);
 
-        // Header Styling
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Arial", Font.BOLD, 14));
         header.setBackground(new Color(0, 120, 215));
         header.setForeground(Color.WHITE);
 
-        // Column Widths
         table.getColumnModel().getColumn(0).setPreferredWidth(50);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
-        table.getColumnModel().getColumn(2).setPreferredWidth(150);
-        table.getColumnModel().getColumn(3).setPreferredWidth(150);
+        table.getColumnModel().getColumn(2).setPreferredWidth(150); // Sesuaikan lebar kolom aksi
 
-        // Action Buttons
         table.getColumn("AKSI").setCellRenderer(new ButtonRenderer());
         table.getColumn("AKSI").setCellEditor(new ButtonEditor(new JCheckBox()));
     }
@@ -109,7 +97,7 @@ public class panelKategori extends JPanel {
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         footerPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // Pagination (Example)
+        // Pagination (Example) - ini bisa dibiarkan atau diimplementasikan nanti
         JButton prevButton = new JButton("←");
         JButton nextButton = new JButton("→");
         JLabel pageLabel = new JLabel("Page 1");
@@ -121,34 +109,30 @@ public class panelKategori extends JPanel {
         return footerPanel;
     }
 
+    // ⬇️ UBAH INI UNTUK MENAMBAH KATEGORI VIA REPO
     private void showAddCategoryDialog(ActionEvent e) {
         JDialog dialog = new JDialog();
         dialog.setTitle("Add New Category");
-        dialog.setSize(400, 250);
+        dialog.setSize(400, 200); // Sesuaikan ukuran
         dialog.setModal(true);
         dialog.setLocationRelativeTo(this);
 
-        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // Hanya nama kategori
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Form Components
         formPanel.add(new JLabel("Category Name:"));
         JTextField nameField = new JTextField();
         formPanel.add(nameField);
 
-        formPanel.add(new JLabel("Supplier:"));
-        JComboBox<String> supplierCombo = new JComboBox<>(new String[]{"JAN RODI", "AGUS", "ADIT"});
-        formPanel.add(supplierCombo);
-
-        // Submit Button
         JButton submitButton = new JButton("Save");
         submitButton.addActionListener(ev -> {
-            model.addRow(new Object[]{
-                    model.getRowCount() + 1,
-                    nameField.getText(),
-                    supplierCombo.getSelectedItem(),
-                    "Edit/Hapus"
-            });
+            String categoryName = nameField.getText().trim();
+            if (categoryName.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Nama kategori tidak boleh kosong.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            kategoriRepo.addkategori(categoryName); // Tambah kategori via repoKategori
+            refreshCategoryData(); // Refresh tampilan tabel
             dialog.dispose();
         });
 
@@ -157,7 +141,15 @@ public class panelKategori extends JPanel {
         dialog.setVisible(true);
     }
 
-    // Custom Button Renderer
+    // Metode untuk memuat dan menampilkan data kategori dari repo
+    public void refreshCategoryData() {
+        model.setRowCount(0); // Kosongkan tabel
+        for (kategori k : kategoriRepo.getCategories()) {
+            model.addRow(new Object[]{k.getId(), k.getNama(), "Edit/Hapus"});
+        }
+    }
+
+    // Custom Button Renderer (tetap sama)
     private static class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer() {
             setOpaque(true);
@@ -170,7 +162,7 @@ public class panelKategori extends JPanel {
         }
     }
 
-    // Custom Button Editor
+    // Custom Button Editor (logika diperbarui untuk memanggil repoKategori)
     private class ButtonEditor extends DefaultCellEditor {
         private JPanel panel;
         private JButton editButton;
@@ -214,20 +206,39 @@ public class panelKategori extends JPanel {
     }
 
     private void editCategory(int row) {
-        JOptionPane.showMessageDialog(this,
-                "Edit kategori: " + model.getValueAt(row, 1),
-                "Edit Category",
-                JOptionPane.INFORMATION_MESSAGE);
+        int kategoriId = (int) model.getValueAt(row, 0); // Ambil ID dari tabel
+        String currentName = (String) model.getValueAt(row, 1);
+
+        String newName = JOptionPane.showInputDialog(this,
+                "Edit nama kategori:", "Edit Category", JOptionPane.PLAIN_MESSAGE, null, null, currentName).toString();
+
+        if (newName != null && !newName.trim().isEmpty()) {
+            boolean updated = kategoriRepo.updateKategori(kategoriId, newName.trim());
+            if (updated) {
+                refreshCategoryData(); // Refresh tampilan tabel
+                JOptionPane.showMessageDialog(this, "Kategori berhasil diperbarui.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal memperbarui kategori.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void deleteCategory(int row) {
+        int kategoriId = (int) model.getValueAt(row, 0); // Ambil ID dari tabel
+        String categoryName = (String) model.getValueAt(row, 1);
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Hapus kategori " + model.getValueAt(row, 1) + "?",
+                "Hapus kategori " + categoryName + "?",
                 "Konfirmasi",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            model.removeRow(row);
+            boolean deleted = kategoriRepo.deletKategori(kategoriId); // Panggil delete dari repoKategori
+            if (deleted) {
+                refreshCategoryData(); // Refresh tampilan tabel
+                JOptionPane.showMessageDialog(this, "Kategori berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menghapus kategori.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
