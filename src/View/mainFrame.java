@@ -53,7 +53,6 @@ public class mainFrame extends JFrame {
         return kasirPanel;
     }
 
-
     public void logout() {
         // Implementasi logout
         this.dispose();
