@@ -33,30 +33,39 @@ public class panelMenu extends JPanel {
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         setupMenuTable();
-        add(createActionPanel(), BorderLayout.SOUTH);
+//        add(createActionPanel(), BorderLayout.SOUTH);
         refreshMenuData();
     }
 
     private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(0, 120, 215));
-        headerPanel.setPreferredSize(new Dimension(getWidth(), 60));
-
-        JLabel titleLabel = new JLabel("DAILY MENUS", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titleLabel.setForeground(Color.WHITE);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
         JButton backButton = new JButton("← Back");
-        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        backButton.setFont(new Font("Arial", Font.PLAIN, 14));
         backButton.setBackground(new Color(0, 120, 215));
         backButton.setForeground(Color.WHITE);
         backButton.setBorderPainted(false);
         backButton.addActionListener(e -> mainAppFrame.showPanel("DASHBOARD"));
         headerPanel.add(backButton, BorderLayout.WEST);
 
+        JLabel titleLabel = new JLabel("Daily Menus", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+
+        JButton addButton = new JButton("+ Add Menus");
+        addButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        addButton.setBackground(new Color(0, 180, 120));
+        addButton.setForeground(Color.WHITE);
+        addButton.setBorderPainted(false);
+        addButton.addActionListener(this::showAddMenuDialog);
+        headerPanel.add(addButton, BorderLayout.EAST);
+
         return headerPanel;
     }
+
 
     private void setupMenuTable() {
         String[] columns = {"NO", "ID", "NAMA MENU", "KATEGORI", "HARGA", "STOK", "SUPPLIER", "AKSI"};
@@ -104,28 +113,6 @@ public class panelMenu extends JPanel {
         menuTable.getColumnModel().getColumn(7).setCellRenderer(new ButtonRenderer());
         menuTable.getColumnModel().getColumn(7).setCellEditor(new ButtonEditor(new JCheckBox()));
     }
-
-    private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        panel.setBackground(new Color(240, 240, 240));
-
-        JButton addButton = new JButton("Tambah Menu");
-        styleAddButton(addButton);
-
-        panel.add(addButton, BorderLayout.EAST);
-        return panel;
-    }
-
-    private void styleAddButton(JButton button) {
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setBackground(new Color(0, 180, 120));
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        button.addActionListener(this::showAddMenuDialog);
-    }
-
     private void showAddMenuDialog(ActionEvent e) {
         JDialog dialog = new JDialog();
         dialog.setTitle("Tambah Menu Baru");
@@ -194,9 +181,11 @@ public class panelMenu extends JPanel {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setText(value == null ? "" : value.toString());
+//            setText(value == null ? " " : value.toString());
+            setText("Edit/Hapus");
             return this;
         }
+
     }
 
     private class ButtonEditor extends DefaultCellEditor {
@@ -230,7 +219,7 @@ public class panelMenu extends JPanel {
         }
 
         public Object getCellEditorValue() {
-            return "";
+            return "Edit/Hapus";
         }
     }
 

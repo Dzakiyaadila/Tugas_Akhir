@@ -44,7 +44,7 @@ public class panelSupplier extends JPanel {
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15)); // Border yang konsisten
 
         // tombol Back
-        JButton backButton = new JButton("← Kembali");
+        JButton backButton = new JButton("← Back");
         backButton.setFont(new Font("Arial", Font.PLAIN, 14));
         backButton.setBackground(new Color(0, 120, 215));
         backButton.setForeground(Color.WHITE);
@@ -212,18 +212,23 @@ public class panelSupplier extends JPanel {
             JButton editBtn = new JButton("✏️");
             editBtn.addActionListener(e -> {
                 editSupplier(row);
-                fireEditingStopped();
+                fireEditingCanceled();
             });
 
             JButton deleteBtn = new JButton("🗑️");
             deleteBtn.addActionListener(e -> {
                 deleteSupplier(row);
-                fireEditingStopped();
+                fireEditingCanceled();
             });
 
             panel.add(editBtn);
             panel.add(deleteBtn);
             return panel;
+        }
+        @Override
+        public Object getCellEditorValue() {
+            // Kembalikan nilai asli, bukan nilai dari checkbox
+            return "Edit/Hapus";
         }
     }
 

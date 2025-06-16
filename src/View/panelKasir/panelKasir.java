@@ -60,7 +60,7 @@ public class panelKasir extends JPanel {
         panel.setBackground(new Color(0, 120, 215));
         panel.setBorder(new EmptyBorder(10, 15, 10, 15));
 
-        JButton backButton = new JButton("← Kembali");
+        JButton backButton = new JButton("← Back");
         // StyleButton seharusnya bukan di dalam method createHeaderPanel
         // styleButton(backButton, new Color(200, 200, 200), Color.BLACK); // ini menyebabkan error
         // Asumsi ada metode styleButton yang sudah kamu definisikan

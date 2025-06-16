@@ -22,7 +22,7 @@ public class panelKategori extends JPanel {
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER); // Main panel akan setup tabel
-        add(createFooterPanel(), BorderLayout.SOUTH);
+//        add(createFooterPanel(), BorderLayout.SOUTH);
 
         refreshCategoryData(); // Muat data kategori saat inisialisasi
     }
@@ -91,22 +91,6 @@ public class panelKategori extends JPanel {
 
         table.getColumn("AKSI").setCellRenderer(new ButtonRenderer());
         table.getColumn("AKSI").setCellEditor(new ButtonEditor(new JCheckBox()));
-    }
-
-    private JPanel createFooterPanel() {
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        footerPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        // Pagination (Example) - ini bisa dibiarkan atau diimplementasikan nanti
-        JButton prevButton = new JButton("←");
-        JButton nextButton = new JButton("→");
-        JLabel pageLabel = new JLabel("Page 1");
-
-        footerPanel.add(prevButton);
-        footerPanel.add(pageLabel);
-        footerPanel.add(nextButton);
-
-        return footerPanel;
     }
 
     // ⬇️ UBAH INI UNTUK MENAMBAH KATEGORI VIA REPO
@@ -201,7 +185,7 @@ public class panelKategori extends JPanel {
         }
 
         public Object getCellEditorValue() {
-            return "";
+            return "Edit/Hapus";
         }
     }
 
