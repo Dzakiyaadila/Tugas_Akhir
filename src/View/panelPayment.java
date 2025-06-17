@@ -16,7 +16,7 @@ public class panelPayment extends JPanel {
         headerPanel.setBackground(new Color(240, 240, 240));
 
         // 1. Tombol Back
-        JButton backButton = new JButton("← Kembali");
+        JButton backButton = new JButton("← Back");
         styleBackButton(backButton);
         headerPanel.add(backButton, BorderLayout.WEST);
 

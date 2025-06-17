@@ -28,36 +28,39 @@ public class panelDashboard extends JPanel {
         headerPanel.setPreferredSize(new Dimension(mainFrame.getWidth(), 60));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
 
-        // Judul Aplikasi
+        // Judul Aplikasi (kiri)
         JLabel titleLabel = new JLabel("CANTEEN MANAGEMENT SYSTEM");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
-        // Menu Navigasi
-        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        // Panel untuk navigasi + LOGOUT
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.X_AXIS));
         navPanel.setOpaque(false);
+        navPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
+        // Glue untuk mendorong navigasi ke kanan (tambah di sini)
+        navPanel.add(Box.createHorizontalGlue());
+
+        // Tombol navigasi (HOME, CASHIER, REPORT)
         String[] navItems = {"HOME", "CASHIER", "REPORT"};
         for (String item : navItems) {
             JButton navButton = new JButton(item);
             styleNavButton(navButton);
-
             navButton.addActionListener(e -> handleNavAction(item));
             navPanel.add(navButton);
+            navPanel.add(Box.createHorizontalStrut(20)); // Jarak antar tombol
         }
 
-        // Logout Button
+        // Tombol LOGOUT (tetap di kanan)
         JButton logoutButton = new JButton("LOGOUT");
-        styleNavButton(logoutButton);
+        styleLogoutButton(logoutButton);
         logoutButton.addActionListener(e -> mainFrame.logout());
+        navPanel.add(Box.createHorizontalStrut(40)); // Jarak tambahan sebelum LOGOUT
+        navPanel.add(logoutButton);
 
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setOpaque(false);
-        rightPanel.add(navPanel, BorderLayout.CENTER);
-        rightPanel.add(logoutButton, BorderLayout.EAST);
-
-        headerPanel.add(rightPanel, BorderLayout.CENTER);
+        headerPanel.add(navPanel, BorderLayout.CENTER);
         return headerPanel;
     }
 
@@ -69,6 +72,17 @@ public class panelDashboard extends JPanel {
         button.setFocusPainted(false);
         button.setContentAreaFilled(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+    private void styleLogoutButton(JButton button){
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setForeground(Color.white);
+        button.setBackground(new Color(200, 50, 50));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.WHITE, 1), // Border putih
+                BorderFactory.createEmptyBorder(5, 15, 5, 15) // Padding
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setContentAreaFilled(true); // Aktifkan background
     }
 
     private JPanel createHomePanel() {
