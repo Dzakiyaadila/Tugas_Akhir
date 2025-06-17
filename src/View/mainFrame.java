@@ -1,14 +1,13 @@
 package View;
 
-import CRUD.repoSupplier;
 import View.panelKasir.panelKasir;
-import CRUD.repoKategori;
-import CRUD.repoMenu;
-import CRUD.repoTransaksi;
+import CRUD.*;
+import View.KategoriDataChangeListener;
 import View.panelReport.panelReport;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class mainFrame extends JFrame {
     private final CardLayout cardLayout = new CardLayout();
@@ -25,6 +24,7 @@ public class mainFrame extends JFrame {
     private repoMenu menuRepo;
     private repoSupplier supplierRepo;
     private repoTransaksi transaksiRepo;
+    private repoPaymentSettings paymentSettingsRepo;
 
     public mainFrame() {
         setTitle("Canteen Management System");
@@ -34,16 +34,18 @@ public class mainFrame extends JFrame {
 
         // --- INISIALISASI REPO DI SINI ---
         kategoriRepo = new repoKategori();
-        supplierRepo = new repoSupplier(kategoriRepo);
         menuRepo = new repoMenu(kategoriRepo);
+        supplierRepo = new repoSupplier(kategoriRepo, menuRepo);
         transaksiRepo = new repoTransaksi();
         reportPanel = new panelReport(cardLayout, cardPanel);
-
-        paymentPanel = new panelPayment();
+        paymentSettingsRepo = new repoPaymentSettings();
+        kategoriRepo.setMenuRepo(menuRepo);
 
         initializePanels();
         getContentPane().add(cardPanel, BorderLayout.CENTER);
         showDashboard();
+
+        kategoriRepo.addKategoriDataChangeListener(kategoriPanelInstance);
     }
 
     private void initializePanels() {
@@ -52,13 +54,14 @@ public class mainFrame extends JFrame {
         menuPanelInstance = new panelMenu(this, menuRepo, kategoriRepo, supplierRepo);
         kategoriPanelInstance = new panelKategori(this, kategoriRepo);
         supplierPanelInstance = new panelSupplier(this, supplierRepo, kategoriRepo);
+        paymentPanel = new panelPayment(this, paymentSettingsRepo);
 
         cardPanel.add(menuPanelInstance, "MENU");
         cardPanel.add(kategoriPanelInstance, "CATEGORY");
         cardPanel.add(supplierPanelInstance, "SUPPLIER");
         cardPanel.add(paymentPanel, "PAYMENT");
 
-        kasirPanel = new panelKasir(menuRepo, transaksiRepo, reportPanel, paymentPanel);
+        kasirPanel = new panelKasir(menuRepo, transaksiRepo, reportPanel, paymentSettingsRepo);
         cardPanel.add(kasirPanel, "KASIR");
         cardPanel.add(reportPanel, "REPORT");
     }
@@ -86,23 +89,24 @@ public class mainFrame extends JFrame {
                 if (supplierPanelInstance != null) supplierPanelInstance.refreshSupplierData();
                 break;
             case "PAYMENT":
-                // Tidak ada yang perlu diperbarui di KASIR saat beralih ke panel PAYMENT,
-                // karena perubahan akan dipicu saat kembali ke KASIR.
+                if (paymentPanel != null) {
+                    paymentPanel.refreshPaymentMethods(); // Refresh tampilan metode pembayaran
+                }
                 break;
         }
     }
 
+//    == GETTERS ==
     public panelKasir getKasirPanel() {
         return kasirPanel;
     }
-
     public panelMenu getMenuPanel() {
         return menuPanelInstance;
     }
-
     public panelSupplier getSupplierPanel() {
         return supplierPanelInstance;
     }
+    public panelPayment getPaymentPanel() { return paymentPanel; }
 
     public void logout() {
         this.dispose();

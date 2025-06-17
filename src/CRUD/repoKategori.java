@@ -1,7 +1,8 @@
 package CRUD;
 
 import Logic.kategori;
-import java.io.*; // Import untuk operasi file
+import Logic.menu;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import View.KategoriDataChangeListener; // Import interface listener
 public class repoKategori {
     private List<kategori> categories;
     private int nextId;
+    private repoMenu menuRepo;
     private List<KategoriDataChangeListener> kategoriListeners = new ArrayList<>();
 
     // Definisikan nama file CSV untuk kategori
@@ -31,6 +33,11 @@ public class repoKategori {
             // Jika ada kategori yang dimuat, tentukan nextId berdasarkan ID tertinggi yang ada
             this.nextId = categories.stream().mapToInt(k -> k.getId()).max().orElse(0) + 1; //
         }
+    }
+
+    // setter untuk menuRepo
+    public void setMenuRepo(repoMenu menuRepo){
+        this.menuRepo = menuRepo;
     }
 
     // Metode untuk menambahkan listener
@@ -67,13 +74,47 @@ public class repoKategori {
     }
 
     // hapus kategori by id
-    public boolean deletKategori(int id){
+    public boolean deleteKategori(int id){
+        kategori kategoriToDelete = getId(id);
+        if (kategoriToDelete == null) {
+            System.out.println("repoKategori: Gagal menghapus. Kategori dengan ID " + id + " tidak ditemukan.");
+            return false;
+        }
+
+        // --- LOGIKA CASCADE DELETE KE MENU ---
+        // PASTIKAN menuRepo TIDAK NULL sebelum memanggilnya
+        if (this.menuRepo != null) {
+            System.out.println("repoKategori: Memulai cascade delete untuk kategori: " + kategoriToDelete.getNama());
+            List<menu> allMenusBeforeDeletion = new ArrayList<>(menuRepo.getListMenu());
+            List<menu> menusToDelete = new ArrayList<>();
+
+            for (menu m : allMenusBeforeDeletion) {
+                // Pastikan m.getKategori() tidak null sebelum memanggil getId()
+                if (m.getKategori() != null && m.getKategori().getId() == kategoriToDelete.getId()) {
+                    menusToDelete.add(m);
+                }
+            }
+
+            System.out.println("repoKategori: Ditemukan " + menusToDelete.size() + " menu yang terkait dengan kategori '" + kategoriToDelete.getNama() + "'.");
+            for (menu m : menusToDelete) {
+                System.out.println("repoKategori: Menghapus menu: " + m.getNama() + " (ID: " + m.getId() + ")");
+                menuRepo.deleteMenu(m.getId()); // Panggil metode deleteMenu di repoMenu
+            }
+        } else {
+            System.err.println("repoKategori: menuRepo belum diinisialisasi untuk cascade delete kategori!");
+        }
+        // --- AKHIR LOGIKA CASCADE DELETE ---
+
+
         boolean removed = categories.removeIf(kategori -> kategori.getId()==id);
         if (removed) {
-            saveCategoriesToFile(); // Simpan perubahan ke file
-            notifyKategoriDataChanged(); // Beri tahu listener setelah data berubah
+            saveCategoriesToFile();
+            notifyKategoriDataChanged(); // Beri tahu listener
+            System.out.println("repoKategori: Kategori '" + kategoriToDelete.getNama() + "' berhasil dihapus.");
+            return true;
         }
-        return removed;
+        System.out.println("repoKategori: Gagal menghapus kategori: " + kategoriToDelete.getNama());
+        return false;
     }
 
     // read kategori by ID

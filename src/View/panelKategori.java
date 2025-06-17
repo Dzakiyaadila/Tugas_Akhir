@@ -4,10 +4,16 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.List;
+import java.util.stream.Collectors;
 import CRUD.repoKategori; // Import repoKategori
 import Logic.kategori; // Import Logic.kategori
+import CRUD.repoMenu;
+import View.panelKasir.panelKasir;
 
-public class panelKategori extends JPanel {
+public class panelKategori extends JPanel implements KategoriDataChangeListener{
     private JTable table;
     private DefaultTableModel model;
     private final mainFrame mainAppFrame;
@@ -22,7 +28,7 @@ public class panelKategori extends JPanel {
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER); // Main panel akan setup tabel
-//        add(createFooterPanel(), BorderLayout.SOUTH);
+        //add(createFooterPanel(), BorderLayout.SOUTH);
 
         refreshCategoryData(); // Muat data kategori saat inisialisasi
     }
@@ -211,19 +217,27 @@ public class panelKategori extends JPanel {
         int kategoriId = (int) model.getValueAt(row, 0); // Ambil ID dari tabel
         String categoryName = (String) model.getValueAt(row, 1);
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Hapus kategori " + categoryName + "?",
+                "Hapus kategori " + categoryName + " dan semua menu yang masuk kategori ini?",
                 "Konfirmasi",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean deleted = kategoriRepo.deletKategori(kategoriId); // Panggil delete dari repoKategori
+            boolean deleted = kategoriRepo.deleteKategori(kategoriId); // Panggil delete dari repoKategori
             if (deleted) {
-                refreshCategoryData(); // Refresh tampilan tabel
+//                refreshCategoryData(); // Refresh tampilan tabel
                 JOptionPane.showMessageDialog(this, "Kategori berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                mainAppFrame.getMenuPanel().refreshMenuData();
+                mainAppFrame.getKasirPanel().refreshMenuPanel();
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menghapus kategori.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    @Override
+    public void onKategoriDataChanged(List<kategori> updatedCategories) {
+        System.out.println("PanelKategori: onKategoriDataChanged() dipanggil. Memperbarui tampilan...");
+        refreshCategoryData(); // Panggil metode refresh yang sudah ada
     }
 
     @Override

@@ -309,7 +309,7 @@ public class panelSupplier extends JPanel {
         int supplierId = (int) tableModel.getValueAt(row, 0);
         String supplierName = (String) tableModel.getValueAt(row, 1);
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Hapus supplier " + supplierName + "?",
+                "Hapus supplier " + supplierName + " dan semua menu yang disuplainya?",
                 "Konfirmasi",
                 JOptionPane.YES_NO_OPTION);
 
@@ -319,6 +319,8 @@ public class panelSupplier extends JPanel {
                 refreshSupplierData();
                 JOptionPane.showMessageDialog(this, "Supplier berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 mainAppFrame.getMenuPanel().refreshMenuSupplierDropdown();
+                mainAppFrame.getMenuPanel().refreshMenuData();
+                mainAppFrame.getKasirPanel().refreshMenuPanel();
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menghapus supplier.", "Error", JOptionPane.ERROR_MESSAGE);
             }

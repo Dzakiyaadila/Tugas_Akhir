@@ -2,6 +2,7 @@ package Logic;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
 
 public class transaksi {
     private int idTransaksi;
@@ -27,8 +28,4 @@ public class transaksi {
     public String getMetodePembayaran() { return metodePembayaran; }
     public LocalDateTime getWaktu() { return waktu; }
     public List<transaksiDetail> getDetailList() { return detailList; }
-
-    public int getTransaksiId() {
-        return 0;
-    }
 }

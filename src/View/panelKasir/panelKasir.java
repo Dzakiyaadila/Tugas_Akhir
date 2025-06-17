@@ -1,10 +1,10 @@
 package View.panelKasir;
 
-import Logic.transaksiDetail;
+import Logic.*;
 import View.mainFrame;
 import CRUD.repoMenu;
-import Logic.menu;
 import CRUD.repoTransaksi;
+import CRUD.repoPaymentSettings;
 import View.panelReport.panelReport;
 import View.panelPayment; // Import panelPayment
 
@@ -28,17 +28,19 @@ public class panelKasir extends JPanel {
     private repoMenu menuRepo;
     private repoTransaksi transaksiRepo;
     private panelReport reportPanel;
+    private repoPaymentSettings paymentSettingsRepo;
     private panelPayment paymentPanel; // Field untuk menyimpan instance panelPayment
+
     private JButton cashButton; // Field untuk tombol Tunai
     private JButton qrisButton; // Field untuk tombol QRIS
 
 
     // Perbarui konstruktor untuk menerima panelPayment
-    public panelKasir(repoMenu menuRepo, repoTransaksi transaksiRepo, panelReport reportPanel, panelPayment paymentPanel) {
+    public panelKasir(repoMenu menuRepo, repoTransaksi transaksiRepo, panelReport reportPanel, repoPaymentSettings paymentSettingsRepo) {
         this.menuRepo = menuRepo;
         this.transaksiRepo = transaksiRepo;
-        this.reportPanel = reportPanel;
-        this.paymentPanel = paymentPanel; // Inisialisasi field paymentPanel
+        this.reportPanel = reportPanel;// Inisialisasi field paymentPanel
+        this.paymentSettingsRepo = paymentSettingsRepo;
 
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(240, 240, 240));
@@ -187,7 +189,7 @@ public class panelKasir extends JPanel {
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         cashButton = new JButton("Tunai"); // Inisialisasi cashButton
         stylePaymentButton(cashButton, new Color(0, 180, 60));
-        cashButton.addActionListener(e -> processPayment("CASH"));
+        cashButton.addActionListener(e -> processPayment("TUNAI"));
         qrisButton = new JButton("QRIS"); // Inisialisasi qrisButton
         stylePaymentButton(qrisButton, new Color(0, 120, 215));
         qrisButton.addActionListener(e -> processPayment("QRIS"));
@@ -279,20 +281,43 @@ public class panelKasir extends JPanel {
                 "Konfirmasi Pembayaran", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            for (OrderItem oi : currentOrder) {
-                Logic.menu itemMenu = menuRepo.getListMenu().stream()
-                        .filter(m -> m.getNama().equals(oi.getNama()))
-                        .findFirst()
-                        .orElse(null);
-                if (itemMenu != null) {
-                    menuRepo.updateStok(itemMenu.getId(), itemMenu.getStok() - oi.getJumlah());
+            String paymentId = "PAY-" + System.currentTimeMillis();
+            payment paymentInstance = null;
+
+            switch (paymentMethod) {
+                case "TUNAI":
+                    paymentInstance = new CashPayment(paymentId, total);
+                    break;
+                case "QRIS":
+                    paymentInstance = new QRISPayment(paymentId, total);
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(this, "Metode pembayaran tidak dikenal: " + paymentMethod, "Error Pembayaran", JOptionPane.ERROR_MESSAGE);
+                    return;
+            }
+
+            if (paymentInstance != null) {
+                paymentInstance.pembayaran();
+                System.out.println("Status pembayaran untuk " + paymentMethod + ": " + paymentInstance.getStatus());
+
+                if (paymentInstance.getStatus().equals("Completed")) {
+                    for (OrderItem oi : currentOrder) {
+                        menu itemMenu = menuRepo.getListMenu().stream()
+                                .filter(m -> m.getNama().equals(oi.getNama()))
+                                .findFirst()
+                                .orElse(null);
+                        if (itemMenu != null) {
+                            menuRepo.updateStok(itemMenu.getId(), itemMenu.getStok() - oi.getJumlah());
+                        }
+                    }
+                    saveTransaction(paymentMethod);
+                    JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    resetOrder();
+                    refreshMenuPanel();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Pembayaran gagal diproses. Status: " + paymentInstance.getStatus(), "Error Pembayaran", JOptionPane.ERROR_MESSAGE);
                 }
             }
-            saveTransaction(paymentMethod);
-            JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-            resetOrder();
-            refreshMenuPanel();
-            reportPanel.refresh();
         }
     }
 
@@ -362,26 +387,25 @@ public class panelKasir extends JPanel {
 
     // Metode baru untuk memperbarui status tombol pembayaran
     public void updatePaymentButtonsStatus() {
-        if (paymentPanel != null && cashButton != null && qrisButton != null) {
-            boolean isCashActive = paymentPanel.isPaymentMethodActive("Tunai");
-            boolean isQrisActive = paymentPanel.isPaymentMethodActive("QRIS");
-
-            cashButton.setEnabled(isCashActive);
-            qrisButton.setEnabled(isQrisActive);
-
-            // Ubah warna latar belakang tombol saat dinonaktifkan
-            if (!isCashActive) {
-                cashButton.setBackground(Color.LIGHT_GRAY);
+        if (cashButton != null) {
+            boolean cashActive = paymentSettingsRepo.isMethodActive("TUNAI");
+            cashButton.setEnabled(cashActive);
+            if (cashActive) {
+                stylePaymentButton(cashButton, new Color(0, 180, 60));
             } else {
-                cashButton.setBackground(new Color(0, 180, 60)); // Warna default Tunai
-            }
-
-            if (!isQrisActive) {
-                qrisButton.setBackground(Color.LIGHT_GRAY);
-            } else {
-                qrisButton.setBackground(new Color(0, 120, 215)); // Warna default QRIS
+                stylePaymentButton(cashButton, new Color(150, 150, 150));
             }
         }
+        if (qrisButton != null) {
+            boolean qrisActive = paymentSettingsRepo.isMethodActive("QRIS");
+            qrisButton.setEnabled(qrisActive);
+            if (qrisActive) {
+                stylePaymentButton(qrisButton, new Color(0, 120, 215));
+            } else {
+                stylePaymentButton(qrisButton, new Color(150, 150, 150));
+            }
+        }
+        System.out.println("Payment buttons updated. Cash active: " + paymentSettingsRepo.isMethodActive("TUNAI") + ", QRIS active: " + paymentSettingsRepo.isMethodActive("QRIS"));
     }
 
 

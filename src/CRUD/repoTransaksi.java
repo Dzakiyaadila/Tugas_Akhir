@@ -1,9 +1,8 @@
 package CRUD;
 
-import Logic.CSVHelper;
+
 import Logic.CSVUtil;
 import Logic.transaksi;
-import Logic.transaksiDetail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +19,8 @@ public class repoTransaksi {
     private int getNextAvailableTransaksiId() {
         int maxId = 0;
         for (transaksi trx : daftarTransaksi) {
-            if (trx.getTransaksiId() > maxId) {
-                maxId = trx.getTransaksiId();
+            if (trx.getIdTransaksi() > maxId) {
+                maxId = trx.getIdTransaksi();
             }
         }
         return maxId + 1;
@@ -34,7 +33,7 @@ public class repoTransaksi {
         // Simpan ke file pakai CSVUtil
         CSVUtil.simpanTransaksi(trx);
 
-        System.out.println("Transaksi berhasil disimpan dengan ID: " + trx.getTransaksiId());
+        System.out.println("Transaksi berhasil disimpan dengan ID: " + trx.getIdTransaksi());
     }
 
     public List<transaksi> loadTransaksi() {

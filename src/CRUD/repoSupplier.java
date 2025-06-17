@@ -3,6 +3,7 @@ package CRUD;
 import Logic.CSVHelper;
 import Logic.supplier;
 import Logic.kategori;
+import Logic.menu;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +12,12 @@ public class repoSupplier {
     private List<supplier> suppliers;
     private int nextId;
     private repoKategori kategoriRepo; // akses ke repoKategori
+    private repoMenu menuRepo; // akses ke repoMenu
     private static final String SUPPLIER_FILE = "data/supplier.csv";
 
-    public repoSupplier(repoKategori kategoriRepo) {
+    public repoSupplier(repoKategori kategoriRepo, repoMenu menuRepo) {
         this.kategoriRepo = kategoriRepo;
+        this.menuRepo = menuRepo;
         this.suppliers = new ArrayList<>();
         new File("data").mkdirs();
         loadSuppliers();
@@ -94,10 +97,39 @@ public class repoSupplier {
     }
 
     public boolean deleteSupplier(int id) {
+        supplier supplierToDelete = getSupplierById(id);
+        if (supplierToDelete == null) {
+            System.out.println("repoSupplier: Gagal menghapus. Supplier dengan ID " + id + " tidak ditemukan.");
+            return false;
+        }
+
+        // --- LOGIKA CASCADE DELETE KE MENU ---
+        System.out.println("repoSupplier: Memulai cascade delete untuk supplier: " + supplierToDelete.getNama());
+        List<menu> allMenusBeforeDeletion = new ArrayList<>(menuRepo.getListMenu()); // Salin list agar tidak ada ConcurrentModificationException
+        List<menu> menusToDelete = new ArrayList<>();
+
+        String supplierNameToDelete = supplierToDelete.getNama();
+        for (menu m : allMenusBeforeDeletion) { // Iterasi melalui salinan list
+            if (m.getSupplier() != null && m.getSupplier().equalsIgnoreCase(supplierNameToDelete)) {
+                menusToDelete.add(m);
+            }
+        }
+
+        System.out.println("repoSupplier: Ditemukan " + menusToDelete.size() + " menu yang terkait dengan supplier '" + supplierNameToDelete + "'.");
+        for (menu m : menusToDelete) {
+            System.out.println("repoSupplier: Menghapus menu: " + m.getNama() + " (ID: " + m.getId() + ")");
+            menuRepo.deleteMenu(m.getId()); // Panggil metode deleteMenu di repoMenu
+        }
+        // --- AKHIR LOGIKA CASCADE DELETE ---
+
+        // Sekarang hapus supplier itu sendiri
         boolean removed = suppliers.removeIf(s -> s.getId() == id);
         if (removed) {
-            saveSuppliers();
+            saveSuppliers(); // Simpan perubahan supplier ke CSV
+            System.out.println("repoSupplier: Supplier '" + supplierToDelete.getNama() + "' berhasil dihapus.");
+            return true;
         }
-        return removed;
+        System.out.println("repoSupplier: Gagal menghapus supplier: " + supplierToDelete.getNama());
+        return false;
     }
 }

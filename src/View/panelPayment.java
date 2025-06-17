@@ -1,5 +1,8 @@
 package View;
 
+import  CRUD.repoPaymentSettings;
+import Logic.PaymentSettings;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -8,16 +11,19 @@ import java.util.Map;
 
 public class panelPayment extends JPanel {
 
-    private Map<String, Boolean> paymentMethodStatus;
+    private repoPaymentSettings paymentSettingsRepo;
+    private mainFrame mainAppFrame;
 
-    public panelPayment() {
+    private JToggleButton tunaiToggleBtn;
+    private JToggleButton qrisToggleBtn;
+
+    public panelPayment(mainFrame mainAppFrame, repoPaymentSettings paymentSettingsRepo) {
+        this.mainAppFrame = mainAppFrame;
+        this.paymentSettingsRepo = paymentSettingsRepo;
+
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(240, 240, 240));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        paymentMethodStatus = new HashMap<>();
-        paymentMethodStatus.put("Tunai", true); // Default aktif
-        paymentMethodStatus.put("QRIS", true); // Default aktif
 
         // Panel Header (Back Button + Title)
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -43,11 +49,13 @@ public class panelPayment extends JPanel {
         paymentPanel.setBackground(new Color(240, 240, 240));
 
         // Tunai Card
-        JPanel tunaiCard = createToggleCard("Tunai", "💵", paymentMethodStatus.get("Tunai"));
+        boolean isTunaiActive = paymentSettingsRepo.isMethodActive("TUNAI");
+        JPanel tunaiCard = createToggleCard("Tunai", "💵", isTunaiActive);
         paymentPanel.add(tunaiCard);
 
         // QRIS Card
-        JPanel qrisCard = createToggleCard("QRIS", "📱", paymentMethodStatus.get("QRIS"));
+        boolean isQrisActive = paymentSettingsRepo.isMethodActive("QRIS");
+        JPanel qrisCard = createToggleCard("QRIS", "📱", isQrisActive);
         paymentPanel.add(qrisCard);
 
         // Panel pembungkus untuk membuat payment methods lebih ke tengah
@@ -111,6 +119,12 @@ public class panelPayment extends JPanel {
         toggleBtn.setFocusPainted(false);
         toggleBtn.setBorderPainted(false);
 
+        if (title.equals("Tunai")) {
+            tunaiToggleBtn = toggleBtn;
+        } else if (title.equals("QRIS")) {
+            qrisToggleBtn = toggleBtn;
+        }
+
         toggleBtn.addActionListener(e -> {
             boolean selected = toggleBtn.isSelected();
             toggleBtn.setText(selected ? "ACTIVE" : "INACTIVE");
@@ -119,7 +133,6 @@ public class panelPayment extends JPanel {
                     BorderFactory.createLineBorder(selected ? new Color(50, 200, 50) : new Color(200, 50, 50), 2),
                     BorderFactory.createEmptyBorder(15, 15, 15, 15)
             ));
-            paymentMethodStatus.put(title, selected); // Perbarui status di map
         });
 
         // Gabungkan Komponen Card
@@ -129,8 +142,21 @@ public class panelPayment extends JPanel {
         return card;
     }
 
-    // Metode getter untuk mendapatkan status metode pembayaran
-    public boolean isPaymentMethodActive(String methodName) {
-        return paymentMethodStatus.getOrDefault(methodName, false); // Default false jika tidak ditemukan
+    public void refreshPaymentMethods() {
+        boolean isTunaiActive = paymentSettingsRepo.isMethodActive("TUNAI");
+        if (tunaiToggleBtn != null) {
+            tunaiToggleBtn.setSelected(isTunaiActive);
+            tunaiToggleBtn.setText(isTunaiActive ? "ACTIVE" : "INACTIVE");
+            tunaiToggleBtn.setBackground(isTunaiActive ? new Color(50, 200, 50) : new Color(200, 50, 50));
+        }
+
+        boolean isQrisActive = paymentSettingsRepo.isMethodActive("QRIS");
+        if (qrisToggleBtn != null) {
+            qrisToggleBtn.setSelected(isQrisActive);
+            qrisToggleBtn.setText(isQrisActive ? "ACTIVE" : "INACTIVE");
+            qrisToggleBtn.setBackground(isQrisActive ? new Color(50, 200, 50) : new Color(200, 50, 50));
+        }
+        revalidate();
+        repaint();
     }
 }

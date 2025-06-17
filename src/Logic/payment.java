@@ -19,6 +19,13 @@ public abstract class payment {
 
     public abstract void pembayaran();
 
+    // Getters untuk akses dari luar
+    public String getId() { return id; }
+    public double getAmount() { return amount; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public String getStatus() { return status; }
+    public LocalDateTime getPaymentDate() { return paymentDate; }
+
     public void displayPaymentInfo() {
         System.out.println("Payment ID: " + id);
         System.out.println("Amount: " + amount);

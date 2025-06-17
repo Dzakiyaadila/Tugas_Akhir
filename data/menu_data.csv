@@ -1,8 +1,4 @@
 id,nama,harga,idKategori,stok,supplier
-2,Isoplus,3500.00,10,2,Ionicks
-3,Nasi_Kunink,5000.00,20,1,Naskun.Elite
-4,joyko_pensil,2000.00,10,3,kiya
-6,buku tulis,40000.00,10,3,kiyaa
-7,Kertas HVS A4,500.00,200,3,Budi
-8,Nasi Goreng Spesial,38000.00,12,1,Vendor A
-10,Ganci,15000.00,20,4,Cindy
+1,Isoplus,4500.00,25,2,ionicks
+2,Nasi KUNINK!,5000.00,8,1,naskunelitist
+3,Pensil 2B,3000.00,26,3,Faber Castell

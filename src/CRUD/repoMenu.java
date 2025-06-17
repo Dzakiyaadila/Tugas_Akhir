@@ -12,9 +12,6 @@ public class repoMenu {
     private int nextId;
     private repoKategori kategoriRepo;
     private static final String MENU_FILE = "data/menu_data.csv";
-    private Logic.kategori kategori;
-    private int stok;
-    private String supplier;
 
     //KIYA NAMBAHIN METHOD
     private List<MenuDataChangeListener> Listeners = new ArrayList<>();

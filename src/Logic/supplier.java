@@ -67,6 +67,6 @@ public class supplier {
 
     @Override
     public String toString() {
-        return id + " - " + nama + " (" + kategori.getNama() + ")"; // Tambahkan kategori di toString
+        return id + " - " + nama + " (" + (kategori != null ? kategori.getNama() : "N/A") + ")"; // Tambahkan kategori di toString
     }
 }
