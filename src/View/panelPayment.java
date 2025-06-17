@@ -3,13 +3,21 @@ package View;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class panelPayment extends JPanel {
+
+    private Map<String, Boolean> paymentMethodStatus;
 
     public panelPayment() {
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(240, 240, 240));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        paymentMethodStatus = new HashMap<>();
+        paymentMethodStatus.put("Tunai", true); // Default aktif
+        paymentMethodStatus.put("QRIS", true); // Default aktif
 
         // Panel Header (Back Button + Title)
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -30,16 +38,16 @@ public class panelPayment extends JPanel {
 
         // 3. Payment Methods Panel (Horizontal)
         JPanel paymentPanel = new JPanel();
-        paymentPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 0)); // Spasi horizontal 30px
+        paymentPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 0));
         paymentPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         paymentPanel.setBackground(new Color(240, 240, 240));
 
         // Tunai Card
-        JPanel tunaiCard = createToggleCard("Tunai", "💵", true);
+        JPanel tunaiCard = createToggleCard("Tunai", "💵", paymentMethodStatus.get("Tunai"));
         paymentPanel.add(tunaiCard);
 
         // QRIS Card
-        JPanel qrisCard = createToggleCard("QRIS", "📱", true);
+        JPanel qrisCard = createToggleCard("QRIS", "📱", paymentMethodStatus.get("QRIS"));
         paymentPanel.add(qrisCard);
 
         // Panel pembungkus untuk membuat payment methods lebih ke tengah
@@ -52,7 +60,7 @@ public class panelPayment extends JPanel {
         // 4. Bottom Panel (Total)
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setBackground(new Color(240, 240, 240));
-        bottomPanel.add(new JLabel("Total Payments: 2"));
+        bottomPanel.add(new JLabel("Total Payments: 2")); // Ini mungkin statis, bisa diubah jika perlu menampilkan data dinamis
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -111,6 +119,7 @@ public class panelPayment extends JPanel {
                     BorderFactory.createLineBorder(selected ? new Color(50, 200, 50) : new Color(200, 50, 50), 2),
                     BorderFactory.createEmptyBorder(15, 15, 15, 15)
             ));
+            paymentMethodStatus.put(title, selected); // Perbarui status di map
         });
 
         // Gabungkan Komponen Card
@@ -118,5 +127,10 @@ public class panelPayment extends JPanel {
         card.add(toggleBtn, BorderLayout.SOUTH);
 
         return card;
+    }
+
+    // Metode getter untuk mendapatkan status metode pembayaran
+    public boolean isPaymentMethodActive(String methodName) {
+        return paymentMethodStatus.getOrDefault(methodName, false); // Default false jika tidak ditemukan
     }
 }

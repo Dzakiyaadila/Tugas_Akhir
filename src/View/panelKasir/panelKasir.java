@@ -5,12 +5,14 @@ import View.mainFrame;
 import CRUD.repoMenu;
 import Logic.menu;
 import CRUD.repoTransaksi;
+import View.panelReport.panelReport;
+import View.panelPayment; // Import panelPayment
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter; // Tambahkan import ini
-import java.awt.event.MouseEvent; // Tambahkan import ini
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -18,19 +20,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class panelKasir extends JPanel {
-    // Ubah menuPanel menjadi transient agar tidak otomatis disimpan saat serialisasi (jika nanti ada)
-    // atau untuk menunjukkan bahwa ini akan selalu dibangun ulang
-    private transient JPanel menuPanel; // <-- ubah ini
+    private transient JPanel menuPanel;
     private JPanel orderPanel;
     private DefaultListModel<String> orderListModel;
     private JLabel totalLabel;
     private List<OrderItem> currentOrder;
     private repoMenu menuRepo;
     private repoTransaksi transaksiRepo;
+    private panelReport reportPanel;
+    private panelPayment paymentPanel; // Field untuk menyimpan instance panelPayment
+    private JButton cashButton; // Field untuk tombol Tunai
+    private JButton qrisButton; // Field untuk tombol QRIS
 
-    public panelKasir(repoMenu menuRepo, repoTransaksi transaksiRepo) {
+
+    // Perbarui konstruktor untuk menerima panelPayment
+    public panelKasir(repoMenu menuRepo, repoTransaksi transaksiRepo, panelReport reportPanel, panelPayment paymentPanel) {
         this.menuRepo = menuRepo;
         this.transaksiRepo = transaksiRepo;
+        this.reportPanel = reportPanel;
+        this.paymentPanel = paymentPanel; // Inisialisasi field paymentPanel
 
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(240, 240, 240));
@@ -39,9 +47,8 @@ public class panelKasir extends JPanel {
         JPanel headerPanel = createHeaderPanel();
         add(headerPanel, BorderLayout.NORTH);
 
-        // Awalnya inisialisasi menuPanel dan orderPanel
-        menuPanel = createMenuPanel(); // Panggil pertama kali
-        orderPanel = createOrderPanel();
+        menuPanel = createMenuPanel();
+        orderPanel = createOrderPanel(); // createOrderPanel akan menginisialisasi cashButton dan qrisButton
 
         JSplitPane contentPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, menuPanel, orderPanel);
         contentPanel.setResizeWeight(0.7);
@@ -53,6 +60,7 @@ public class panelKasir extends JPanel {
         add(createFooterPanel(), BorderLayout.SOUTH);
 
         currentOrder = new ArrayList<>();
+        updatePaymentButtonsStatus(); // Panggil saat inisialisasi untuk mengatur status awal tombol
     }
 
     private JPanel createHeaderPanel() {
@@ -61,10 +69,6 @@ public class panelKasir extends JPanel {
         panel.setBorder(new EmptyBorder(10, 15, 10, 15));
 
         JButton backButton = new JButton("← Back");
-        // StyleButton seharusnya bukan di dalam method createHeaderPanel
-        // styleButton(backButton, new Color(200, 200, 200), Color.BLACK); // ini menyebabkan error
-        // Asumsi ada metode styleButton yang sudah kamu definisikan
-        // Jika tidak, hapus saja baris ini untuk sementara agar tidak error
         backButton.addActionListener(e -> ((mainFrame) SwingUtilities.getWindowAncestor(this)).showDashboard());
         panel.add(backButton, BorderLayout.WEST);
 
@@ -138,14 +142,14 @@ public class panelKasir extends JPanel {
         panel.add(nameLabel, BorderLayout.NORTH);
 
         JPanel infoPanel = new JPanel(new GridLayout(0, 1));
-        JLabel priceLabel = new JLabel("Harga: Rp " + String.format("%.2f", item.getHarga())); // Format harga
+        JLabel priceLabel = new JLabel("Harga: Rp " + String.format("%.2f", item.getHarga()));
         JLabel stockLabel = new JLabel("Stok: " + item.getStok() + " unit");
         infoPanel.add(priceLabel);
         infoPanel.add(stockLabel);
         panel.add(infoPanel, BorderLayout.CENTER);
 
         JButton addButton = new JButton("+ Tambah");
-        styleButton(addButton, new Color(0, 180, 120), Color.WHITE); // Pastikan styleButton ada
+        styleButton(addButton, new Color(0, 180, 120), Color.WHITE);
         addButton.addActionListener(e -> {
             addToOrder(item);
         });
@@ -181,11 +185,10 @@ public class panelKasir extends JPanel {
         bottomPanel.add(totalLabel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 0));
-        JButton cashButton = new JButton("Tunai");
+        cashButton = new JButton("Tunai"); // Inisialisasi cashButton
         stylePaymentButton(cashButton, new Color(0, 180, 60));
         cashButton.addActionListener(e -> processPayment("CASH"));
-
-        JButton qrisButton = new JButton("QRIS");
+        qrisButton = new JButton("QRIS"); // Inisialisasi qrisButton
         stylePaymentButton(qrisButton, new Color(0, 120, 215));
         qrisButton.addActionListener(e -> processPayment("QRIS"));
 
@@ -247,12 +250,12 @@ public class panelKasir extends JPanel {
 
     private void refreshOrderList() {
         orderListModel.clear();
-        double total = 0; // Ubah ke double
+        double total = 0;
         for (OrderItem oi : currentOrder) {
-            orderListModel.addElement(oi.getNama() + " x" + oi.getJumlah() + " - Rp " + String.format("%.2f", (oi.getHarga() * oi.getJumlah()))); // Format harga
+            orderListModel.addElement(oi.getNama() + " x" + oi.getJumlah() + " - Rp " + String.format("%.2f", (oi.getHarga() * oi.getJumlah())));
             total += oi.getHarga() * oi.getJumlah();
         }
-        totalLabel.setText("Total: Rp " + String.format("%.2f", total)); // Format harga
+        totalLabel.setText("Total: Rp " + String.format("%.2f", total));
     }
 
     private void resetOrder() {
@@ -288,7 +291,8 @@ public class panelKasir extends JPanel {
             saveTransaction(paymentMethod);
             JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
             resetOrder();
-            refreshMenuPanel(); // Pastikan ini terpanggil untuk update stok di GUI kasir
+            refreshMenuPanel();
+            reportPanel.refresh();
         }
     }
 
@@ -324,38 +328,26 @@ public class panelKasir extends JPanel {
         return panel;
     }
 
-    // --- REVISI UTAMA UNTUK PERSISTENSI REFRESH ---
     @Override
     public void addNotify() {
         super.addNotify();
-        // Ketika panel ini ditambahkan ke komponen induk (misalnya mainFrame's cardPanel)
-        // ini menandakan bahwa panel ini akan segera terlihat.
-        // Saat itulah kita memuat ulang datanya.
-        // Namun, showPanel di mainFrame sudah memanggil refreshMenuPanel.
-        // Kita perlu memastikan bahwa update layout di JSplitPane berjalan dengan baik.
     }
-
 
     public void refreshMenuPanel() {
         System.out.println("refreshMenuPanel() called in panelKasir. Rebuilding menu UI.");
 
-        // Ambil parent yang berisi JSplitPane (ini adalah panelKasir itu sendiri)
-        Component centerComponent = getComponent(1); // Ini harusnya JSplitPane
+        Component centerComponent = getComponent(1);
 
         if (centerComponent instanceof JSplitPane splitPane) {
-            // Hapus menuPanel lama dari splitPane jika ada
             Component existingLeftComponent = splitPane.getLeftComponent();
-            if (existingLeftComponent != null) { // Jangan sampai null
-                splitPane.remove(existingLeftComponent); // Hapus komponen kiri (menuPanel lama)
+            if (existingLeftComponent != null) {
+                splitPane.remove(existingLeftComponent);
             }
 
-            // Buat menuPanel yang baru dengan data terbaru
             menuPanel = createMenuPanel();
 
-            // Set menuPanel yang baru sebagai komponen kiri di splitPane
             splitPane.setLeftComponent(menuPanel);
 
-            // Validasi ulang dan gambar ulang seluruh splitPane dan panelKasir
             splitPane.revalidate();
             splitPane.repaint();
             revalidate();
@@ -364,9 +356,31 @@ public class panelKasir extends JPanel {
             System.out.println("Menu Panel in JSplitPane rebuilt and repainted.");
         } else {
             System.err.println("Error: Central component is not a JSplitPane in refreshMenuPanel!");
-            // Jika bukan JSplitPane, kita perlu mencari tahu mengapa dan bagaimana cara menghapus menuPanel yang lama
-            // Sebagai alternatif, jika JSplitPane tidak ditemukan di indeks 1, cari secara iteratif
-            // atau pastikan struktur BorderLayout panelKasir benar
+        }
+        updatePaymentButtonsStatus(); // Panggil di sini juga
+    }
+
+    // Metode baru untuk memperbarui status tombol pembayaran
+    public void updatePaymentButtonsStatus() {
+        if (paymentPanel != null && cashButton != null && qrisButton != null) {
+            boolean isCashActive = paymentPanel.isPaymentMethodActive("Tunai");
+            boolean isQrisActive = paymentPanel.isPaymentMethodActive("QRIS");
+
+            cashButton.setEnabled(isCashActive);
+            qrisButton.setEnabled(isQrisActive);
+
+            // Ubah warna latar belakang tombol saat dinonaktifkan
+            if (!isCashActive) {
+                cashButton.setBackground(Color.LIGHT_GRAY);
+            } else {
+                cashButton.setBackground(new Color(0, 180, 60)); // Warna default Tunai
+            }
+
+            if (!isQrisActive) {
+                qrisButton.setBackground(Color.LIGHT_GRAY);
+            } else {
+                qrisButton.setBackground(new Color(0, 120, 215)); // Warna default QRIS
+            }
         }
     }
 

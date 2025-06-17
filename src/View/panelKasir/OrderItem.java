@@ -2,10 +2,10 @@ package View.panelKasir;
 
 public class OrderItem {
     private String nama;
-    private double harga; // diubah menjadi double
+    private double harga;
     private int jumlah;
 
-    public OrderItem(String nama, double harga, int jumlah) { // Ubah konstruktor
+    public OrderItem(String nama, double harga, int jumlah) {
         this.nama = nama;
         this.harga = harga;
         this.jumlah = jumlah;
@@ -15,7 +15,9 @@ public class OrderItem {
         return nama;
     }
 
-    public double getHarga() { return harga; }
+    public double getHarga() {
+        return harga;
+    }
 
     public int getJumlah() {
         return jumlah;

@@ -1,5 +1,7 @@
 package View;
 
+import View.panelReport.panelReport;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -161,8 +163,9 @@ public class panelDashboard extends JPanel {
 
                 break;
             case "REPORT":
-                JOptionPane.showMessageDialog(this, "Report module will be implemented");
+                cardLayout.show(cardPanel, "REPORT");
                 break;
+
         }
     }
 

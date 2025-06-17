@@ -10,7 +10,7 @@ public class CSVHelper {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                data.add(line.split(",")); // Pisahkan pakai koma
+                data.add(line.split(","));
             }
         } catch (IOException e) {
             e.printStackTrace();
