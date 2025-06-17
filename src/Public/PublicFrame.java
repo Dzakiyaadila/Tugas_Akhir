@@ -11,15 +11,21 @@ import Logic.menu;
 import Logic.kategori;
 import View.MenuDataChangeListener;
 import CRUD.repoKategori;
+import View.KategoriDataChangeListener; // Import interface listener
 
-
-public class PublicFrame extends JPanel implements MenuDataChangeListener {
+// PublicFrame sekarang mengimplementasikan kedua listener
+public class PublicFrame extends JPanel implements MenuDataChangeListener, KategoriDataChangeListener {
     private JTabbedPane tabbedPane;
     private repoMenu menuRepository;
+    private repoKategori kategoriRepository; // Tambahkan referensi ke repoKategori
 
-    public PublicFrame(repoMenu menuRepository) {
+    // Modifikasi konstruktor untuk menerima repoKategori
+    public PublicFrame(repoMenu menuRepository, repoKategori kategoriRepository) {
         this.menuRepository = menuRepository;
-        this.menuRepository.addMenuDataChangeListener(this);
+        this.menuRepository.addMenuDataChangeListener(this); // Mendaftar sebagai listener perubahan Menu
+
+        this.kategoriRepository = kategoriRepository; // Inisialisasi repoKategori
+        this.kategoriRepository.addKategoriDataChangeListener(this); // Mendaftar sebagai listener perubahan Kategori
 
         setLayout(new BorderLayout(10, 10));
         setBackground(new Color(245, 245, 245));
@@ -38,6 +44,7 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener {
         // 3. Footer
         add(createFooterPanel(), BorderLayout.SOUTH);
 
+        // Panggil updateMenuDisplay saat inisialisasi awal
         updateMenuDisplay(this.menuRepository.getListMenu());
     }
 
@@ -80,65 +87,85 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener {
         });
     }
 
+    // Implementasi metode dari KategoriDataChangeListener
+    @Override
+    public void onKategoriDataChanged(List<kategori> updatedKategoriList) {
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("PublicFrame: Menerima notifikasi perubahan kategori. Memperbarui UI menu.");
+            // Ketika kategori berubah, kita perlu membangun ulang tampilan menu karena pengelompokan berdasarkan kategori.
+            // Oleh karena itu, panggil updateMenuDisplay dengan daftar menu terbaru dari repoMenu.
+            updateMenuDisplay(menuRepository.getListMenu());
+        });
+    }
+
     private void updateMenuDisplay(List<menu> menuList) {
-        tabbedPane.removeAll();
+        tabbedPane.removeAll(); // Hapus semua tab yang ada
 
         // Panel untuk "All Menu"
         JPanel allMenuPanel = new JPanel(new GridLayout(0, 2, 15, 15));
         allMenuPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         allMenuPanel.setBackground(Color.WHITE);
 
+        // Pastikan kategori yang ada di menu masih valid setelah perubahan kategori
+        // atau tangani kategori yang mungkin sudah dihapus
         Map<String, List<menu>> categorizedMenus = menuList.stream()
+                .filter(m -> m.getKategori() != null) // Filter menu dengan kategori null (jika ada yang tidak valid)
                 .collect(Collectors.groupingBy(m -> m.getKategori().getNama()));
 
+        // Tambahkan tab untuk "All Menu" di posisi 0
+        // Tambahkan semua item menu ke allMenuPanel
+        for (menu item : menuList) {
+            allMenuPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga())));
+        }
+        tabbedPane.addTab("All Menu", new JScrollPane(allMenuPanel));
+
+
+        // Tambahkan tab untuk setiap kategori
         categorizedMenus.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> {
                     String category = entry.getKey();
                     List<menu> items = entry.getValue();
 
-                    JPanel categoryPanel = new JPanel(new GridLayout(0, 2, 15, 15));
-                    categoryPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-                    categoryPanel.setBackground(Color.WHITE);
+                    JPanel categorySpecificPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+                    categorySpecificPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                    categorySpecificPanel.setBackground(Color.WHITE);
 
                     for (menu item : items) {
-                        categoryPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga())));
-                        allMenuPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga())));
+                        categorySpecificPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga())));
                     }
-                    tabbedPane.addTab(category, new JScrollPane(categoryPanel));
+                    tabbedPane.addTab(category, new JScrollPane(categorySpecificPanel));
                 });
 
-        tabbedPane.insertTab("All Menu", null, new JScrollPane(allMenuPanel), null, 0);
+        // Pastikan "All Menu" tetap di indeks 0 jika ada kategori lain yang ditambahkan
+        // Jika Anda ingin "All Menu" selalu pertama, pastikan penambahannya di awal atau setelah semua tab kategori ditambahkan
+        // dan kemudian pindah ke indeks 0. Cara di atas (tambah All Menu duluan lalu loop kategori) seharusnya sudah benar.
     }
 
-    // --- MODIFIKASI: createMenuItemCard() tanpa imagePlaceholder ---
     private JPanel createMenuItemCard(String name, String price) {
-        JPanel card = new JPanel(new BorderLayout()); // Menggunakan BorderLayout
+        JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(230, 230, 230), 1),
-                new EmptyBorder(15, 15, 15, 15) // Padding internal
+                new EmptyBorder(15, 15, 15, 15)
         ));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Panel untuk nama dan harga
-        JPanel textPanel = new JPanel(new BorderLayout()); // Menggunakan BorderLayout untuk teks
-        textPanel.setOpaque(false); // Agar background transparan
+        JPanel textPanel = new JPanel(new BorderLayout());
+        textPanel.setOpaque(false);
 
-        // Menu Name
         JLabel nameLabel = new JLabel(name);
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         nameLabel.setForeground(new Color(50, 50, 50));
-        textPanel.add(nameLabel, BorderLayout.NORTH); // Nama di bagian atas textPanel
+        textPanel.add(nameLabel, BorderLayout.NORTH);
 
-        // Price
         JLabel priceLabel = new JLabel("Rp " + price);
         priceLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         priceLabel.setForeground(new Color(0, 120, 215));
-        priceLabel.setBorder(new EmptyBorder(5, 0, 0, 0)); // Sedikit padding dari nama
-        textPanel.add(priceLabel, BorderLayout.CENTER); // Harga di bagian tengah textPanel
+        priceLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
+        textPanel.add(priceLabel, BorderLayout.CENTER);
 
-        card.add(textPanel, BorderLayout.CENTER); // Tambahkan textPanel ke tengah card
+        card.add(textPanel, BorderLayout.CENTER);
 
         return card;
     }
@@ -156,17 +183,36 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Canteen Menu Display");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new PublicFrame(menuRepo));
+            // Teruskan kedua repo ke PublicFrame
+            frame.add(new PublicFrame(menuRepo, kategoriRepo));
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
+
+            // SIMULASI PERUBAHAN KATEGORI (sebagai contoh)
+            Timer addKategoriTimer = new Timer(2000, e -> {
+                kategoriRepo.addkategori("Dessert");
+                System.out.println("SIMULASI: Menambahkan kategori 'Dessert'");
+            });
+            addKategoriTimer.setRepeats(false);
+            addKategoriTimer.start();
+
+            Timer updateKategoriTimer = new Timer(4000, e -> {
+                kategori existingMinuman = kategoriRepo.getKategoriByName("Minuman");
+                if (existingMinuman != null) {
+                    kategoriRepo.updateKategori(existingMinuman.getId(), "Beverages");
+                    System.out.println("SIMULASI: Mengubah nama kategori 'Minuman' menjadi 'Beverages'");
+                }
+            });
+            updateKategoriTimer.setRepeats(false);
+            updateKategoriTimer.start();
+
 
             Timer addTimer = new Timer(3000, e -> {
                 int newId = menuRepo.getListMenu().stream().mapToInt(menu::getId).max().orElse(0) + 1;
                 Logic.kategori newCategory = kategoriRepo.getKategoriByName("MAKANAN");
                 if (newCategory == null) {
-                    // Perbaikan di sini: Jangan langsung membuat kategori dengan ID hardcode
-                    kategoriRepo.addkategori("MAKANAN"); // Biarkan repoKategori yang mengelola ID
+                    kategoriRepo.addkategori("MAKANAN");
                     newCategory = kategoriRepo.getKategoriByName("MAKANAN");
                     System.out.println("SIMULASI: Menambahkan kategori MAKANAN (jika belum ada).");
                 }
@@ -178,8 +224,8 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener {
                     System.err.println("Gagal mendapatkan/membuat kategori 'MAKANAN'. Tidak dapat menambahkan menu.");
                 }
             });
-            addTimer.setRepeats(false);
-            addTimer.start();
+            // addTimer.setRepeats(false); // Komentar ini karena Timer di atas juga akan memicu menu update
+            // addTimer.start(); // Komentar ini untuk menghindari terlalu banyak timer, fokus pada kategori dulu
 
             Timer updatePriceTimer = new Timer(6000, e -> {
                 menu beefSteak = menuRepo.getListMenu().stream()
