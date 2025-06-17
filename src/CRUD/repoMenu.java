@@ -2,7 +2,7 @@ package CRUD;
 import Logic.CSVHelper;
 import Logic.kategori;
 import Logic.menu;
-
+import View.MenuDataChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,9 @@ public class repoMenu {
     private Logic.kategori kategori;
     private int stok;
     private String supplier;
+
+    //KIYA NAMBAHIN METHOD
+    private List<MenuDataChangeListener> Listeners = new ArrayList<>();
 
     public repoMenu(repoKategori kategoriRepo){
         this.kategoriRepo = kategoriRepo;
@@ -36,6 +39,19 @@ public class repoMenu {
         return maxId + 1;
     }
 
+    //KIYA NAMBAHIN METHOD
+    public void addMenuDataChangeListener(MenuDataChangeListener listener) {
+        Listeners.add(listener);
+    }
+    // <--- BARU: Metode untuk memberitahu semua listener tentang perubahan
+    private void notifyMenuDataChange() {
+        // Ambil salinan daftar menu terbaru saat ini
+        List<menu> currentMenus = getListMenu();
+        for (MenuDataChangeListener listener : Listeners) {
+            listener.onMenuDataChanged(currentMenus);
+        }
+    }
+
     public void loadMenu() {
         listMenu.clear();
         List<String[]> data = CSVHelper.readCSV(MENU_FILE);
@@ -51,6 +67,7 @@ public class repoMenu {
                 }
             }
         }
+        notifyMenuDataChange();
     }
 
     public void saveMenu() {

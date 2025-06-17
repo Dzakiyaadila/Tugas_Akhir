@@ -2,6 +2,7 @@ package CRUD;
 import Logic.kategori;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 public class repoKategori {
@@ -49,4 +50,12 @@ public class repoKategori {
         }
         return null; // kalau tidak ditemukan
     }
+    // *** INI YANG HARUS ADA UNTUK MENGHILANGKAN ERROR 1 & 3 ***
+    public kategori getKategoriByName(String name) {
+        Optional<kategori> found = categories.stream()
+                .filter(k -> k.getNama().equalsIgnoreCase(name))
+                .findFirst();
+        return found.orElse(null);
+    }
+
 }
