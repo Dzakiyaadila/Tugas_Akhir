@@ -11,6 +11,9 @@ public class PaymentSettings {
 
     public String getMethodName() { return methodName; }
     public void setActive(boolean active) { isActive = active; }
+    public boolean isActive() {
+        return isActive;
+    }
 
     public String toCsvString() {
         return methodName + "," + isActive;
