@@ -115,7 +115,7 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener, Kateg
         // Tambahkan tab untuk "All Menu" di posisi 0
         // Tambahkan semua item menu ke allMenuPanel
         for (menu item : menuList) {
-            allMenuPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga())));
+            allMenuPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga()), item.getStok()));
         }
         tabbedPane.addTab("All Menu", new JScrollPane(allMenuPanel));
 
@@ -132,7 +132,7 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener, Kateg
                     categorySpecificPanel.setBackground(Color.WHITE);
 
                     for (menu item : items) {
-                        categorySpecificPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga())));
+                        categorySpecificPanel.add(createMenuItemCard(item.getNama(), String.format("%,.0f", item.getHarga()), item.getStok()));
                     }
                     tabbedPane.addTab(category, new JScrollPane(categorySpecificPanel));
                 });
@@ -142,7 +142,7 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener, Kateg
         // dan kemudian pindah ke indeks 0. Cara di atas (tambah All Menu duluan lalu loop kategori) seharusnya sudah benar.
     }
 
-    private JPanel createMenuItemCard(String name, String price) {
+    private JPanel createMenuItemCard(String name, String price, int stok) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -165,6 +165,12 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener, Kateg
         priceLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
         textPanel.add(priceLabel, BorderLayout.CENTER);
 
+        JLabel stockLabel = new JLabel("Stok: " + stok + " unit");
+        stockLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        stockLabel.setForeground(new Color(0, 120, 215));
+        stockLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
+        textPanel.add(stockLabel, BorderLayout.SOUTH);
+
         card.add(textPanel, BorderLayout.CENTER);
 
         return card;
@@ -176,80 +182,80 @@ public class PublicFrame extends JPanel implements MenuDataChangeListener, Kateg
     }
 
     // Metode main untuk testing (opsional, bisa dihapus jika sudah terintegrasi ke mainFrame)
-    public static void main(String[] args) {
-        CRUD.repoKategori kategoriRepo = new CRUD.repoKategori();
-        repoMenu menuRepo = new repoMenu(kategoriRepo);
-
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Canteen Menu Display");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            // Teruskan kedua repo ke PublicFrame
-            frame.add(new PublicFrame(menuRepo, kategoriRepo));
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-
-            // SIMULASI PERUBAHAN KATEGORI (sebagai contoh)
-            Timer addKategoriTimer = new Timer(2000, e -> {
-                kategoriRepo.addkategori("Dessert");
-                System.out.println("SIMULASI: Menambahkan kategori 'Dessert'");
-            });
-            addKategoriTimer.setRepeats(false);
-            addKategoriTimer.start();
-
-            Timer updateKategoriTimer = new Timer(4000, e -> {
-                kategori existingMinuman = kategoriRepo.getKategoriByName("Minuman");
-                if (existingMinuman != null) {
-                    kategoriRepo.updateKategori(existingMinuman.getId(), "Beverages");
-                    System.out.println("SIMULASI: Mengubah nama kategori 'Minuman' menjadi 'Beverages'");
-                }
-            });
-            updateKategoriTimer.setRepeats(false);
-            updateKategoriTimer.start();
-
-
-            Timer addTimer = new Timer(3000, e -> {
-                int newId = menuRepo.getListMenu().stream().mapToInt(menu::getId).max().orElse(0) + 1;
-                Logic.kategori newCategory = kategoriRepo.getKategoriByName("MAKANAN");
-                if (newCategory == null) {
-                    kategoriRepo.addkategori("MAKANAN");
-                    newCategory = kategoriRepo.getKategoriByName("MAKANAN");
-                    System.out.println("SIMULASI: Menambahkan kategori MAKANAN (jika belum ada).");
-                }
-
-                if (newCategory != null) {
-                    menuRepo.addMenu("Nasi Goreng Spesial", 38000.00, newCategory, 12, "Vendor A");
-                    System.out.println("SIMULASI: Menambah Nasi Goreng Spesial");
-                } else {
-                    System.err.println("Gagal mendapatkan/membuat kategori 'MAKANAN'. Tidak dapat menambahkan menu.");
-                }
-            });
-            // addTimer.setRepeats(false); // Komentar ini karena Timer di atas juga akan memicu menu update
-            // addTimer.start(); // Komentar ini untuk menghindari terlalu banyak timer, fokus pada kategori dulu
-
-            Timer updatePriceTimer = new Timer(6000, e -> {
-                menu beefSteak = menuRepo.getListMenu().stream()
-                        .filter(m -> m.getNama().equals("Beef Steak"))
-                        .findFirst().orElse(null);
-                if (beefSteak != null) {
-                    menuRepo.updateMenu(beefSteak.getId(), beefSteak.getNama(), 90000.00, beefSteak.getKategori(), beefSteak.getStok(), beefSteak.getSupplier());
-                    System.out.println("SIMULASI: Memperbarui harga Beef Steak menjadi 90,000");
-                }
-            });
-            updatePriceTimer.setRepeats(false);
-            updatePriceTimer.start();
-
-            Timer updateStockTimer = new Timer(9000, e -> {
-                menu icedLatte = menuRepo.getListMenu().stream()
-                        .filter(m -> m.getNama().equals("Iced Latte"))
-                        .findFirst().orElse(null);
-                if (icedLatte != null) {
-                    menuRepo.updateStok(icedLatte.getId(), 10);
-                    System.out.println("SIMULASI: Memperbarui stok Iced Latte menjadi 10");
-                }
-            });
-            updateStockTimer.setRepeats(false);
-            updateStockTimer.start();
-        });
-    }
+//    public static void main(String[] args) {
+//        CRUD.repoKategori kategoriRepo = new CRUD.repoKategori();
+//        repoMenu menuRepo = new repoMenu(kategoriRepo);
+//
+//        SwingUtilities.invokeLater(() -> {
+//            JFrame frame = new JFrame("Canteen Menu Display");
+//            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//            // Teruskan kedua repo ke PublicFrame
+//            frame.add(new PublicFrame(menuRepo, kategoriRepo));
+//            frame.pack();
+//            frame.setLocationRelativeTo(null);
+//            frame.setVisible(true);
+//
+//            // SIMULASI PERUBAHAN KATEGORI (sebagai contoh)
+//            Timer addKategoriTimer = new Timer(2000, e -> {
+//                kategoriRepo.addkategori("Dessert");
+//                System.out.println("SIMULASI: Menambahkan kategori 'Dessert'");
+//            });
+//            addKategoriTimer.setRepeats(false);
+//            addKategoriTimer.start();
+//
+//            Timer updateKategoriTimer = new Timer(4000, e -> {
+//                kategori existingMinuman = kategoriRepo.getKategoriByName("Minuman");
+//                if (existingMinuman != null) {
+//                    kategoriRepo.updateKategori(existingMinuman.getId(), "Beverages");
+//                    System.out.println("SIMULASI: Mengubah nama kategori 'Minuman' menjadi 'Beverages'");
+//                }
+//            });
+//            updateKategoriTimer.setRepeats(false);
+//            updateKategoriTimer.start();
+//
+//
+//            Timer addTimer = new Timer(3000, e -> {
+//                int newId = menuRepo.getListMenu().stream().mapToInt(menu::getId).max().orElse(0) + 1;
+//                Logic.kategori newCategory = kategoriRepo.getKategoriByName("MAKANAN");
+//                if (newCategory == null) {
+//                    kategoriRepo.addkategori("MAKANAN");
+//                    newCategory = kategoriRepo.getKategoriByName("MAKANAN");
+//                    System.out.println("SIMULASI: Menambahkan kategori MAKANAN (jika belum ada).");
+//                }
+//
+//                if (newCategory != null) {
+//                    menuRepo.addMenu("Nasi Goreng Spesial", 38000.00, newCategory, 12, "Vendor A");
+//                    System.out.println("SIMULASI: Menambah Nasi Goreng Spesial");
+//                } else {
+//                    System.err.println("Gagal mendapatkan/membuat kategori 'MAKANAN'. Tidak dapat menambahkan menu.");
+//                }
+//            });
+//            // addTimer.setRepeats(false); // Komentar ini karena Timer di atas juga akan memicu menu update
+//            // addTimer.start(); // Komentar ini untuk menghindari terlalu banyak timer, fokus pada kategori dulu
+//
+//            Timer updatePriceTimer = new Timer(6000, e -> {
+//                menu beefSteak = menuRepo.getListMenu().stream()
+//                        .filter(m -> m.getNama().equals("Beef Steak"))
+//                        .findFirst().orElse(null);
+//                if (beefSteak != null) {
+//                    menuRepo.updateMenu(beefSteak.getId(), beefSteak.getNama(), 90000.00, beefSteak.getKategori(), beefSteak.getStok(), beefSteak.getSupplier());
+//                    System.out.println("SIMULASI: Memperbarui harga Beef Steak menjadi 90,000");
+//                }
+//            });
+//            updatePriceTimer.setRepeats(false);
+//            updatePriceTimer.start();
+//
+//            Timer updateStockTimer = new Timer(9000, e -> {
+//                menu icedLatte = menuRepo.getListMenu().stream()
+//                        .filter(m -> m.getNama().equals("Iced Latte"))
+//                        .findFirst().orElse(null);
+//                if (icedLatte != null) {
+//                    menuRepo.updateStok(icedLatte.getId(), 10);
+//                    System.out.println("SIMULASI: Memperbarui stok Iced Latte menjadi 10");
+//                }
+//            });
+//            updateStockTimer.setRepeats(false);
+//            updateStockTimer.start();
+//        });
+//    }
 }
