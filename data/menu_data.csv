@@ -2,15 +2,11 @@ id,nama,harga,idKategori,stok,supplier
 1,Nasi Goreng,7500.00,15,1,Vendor Makanan Utama
 2,Es Teh Manis,7000.00,50,2,PT Minuman Segar
 3,Pulpen Gel Hitam,3500.00,100,3,Pemasok Alat Kantor
-4,Keripik Kentang Original,12000.00,30,4,Snackindo Jaya
-5,Charger HP Universal,45000.00,15,5,Elektronik Mandiri
+4,Keripik Kentang Original,12000.00,29,4,Snackindo Jaya
 6,Roti Sobek Coklat,15000.00,25,1,Toko Roti Makmur
-7,Kopi Susu Gula Aren,20000.00,40,2,Kopi Mantap
 8,Buku Tulis A5,8000.00,70,3,Pemasok Alat Kantor
-9,Wafer Coklat Renyah,7500.00,60,4,Snackindo Jaya
-10,Headset Bluetooth,75000.00,10,5,Elektronik Mandiri
+9,Wafer Coklat Renyah,7500.00,53,4,Snackindo Jaya
 11,Mie Ayam Bakso,22000.00,18,1,Vendor Makanan Utama
 12,Air Mineral Botol,5000.00,80,2,PT Minuman Segar
 13,Pensil Warna Set 12,28000.00,35,3,Pemasok Alat Kantor
 14,Coklat Batangan Susu,10000.00,45,4,Snackindo Jaya
-15,Power Bank 10000mAh,120000.00,8,5,Elektronik Mandiri
