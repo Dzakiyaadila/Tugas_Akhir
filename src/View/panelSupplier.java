@@ -7,7 +7,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
-import java.util.stream.Collectors;
 import CRUD.repoSupplier;
 import Logic.supplier;
 import CRUD.repoKategori;

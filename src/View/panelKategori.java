@@ -1,17 +1,15 @@
 package View;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
-import java.util.stream.Collectors;
-import CRUD.repoKategori; // Import repoKategori
-import Logic.kategori; // Import Logic.kategori
-import CRUD.repoMenu;
-import View.panelKasir.panelKasir;
+import CRUD.repoKategori;
+import Logic.kategori;
+
 
 public class panelKategori extends JPanel implements KategoriDataChangeListener{
     private JTable table;
@@ -19,10 +17,9 @@ public class panelKategori extends JPanel implements KategoriDataChangeListener{
     private final mainFrame mainAppFrame;
     private repoKategori kategoriRepo; // Tambahkan ini
 
-    // Ubah konstruktor untuk menerima repoKategori
     public panelKategori(mainFrame mainAppFrame, repoKategori kategoriRepo) {
         this.mainAppFrame = mainAppFrame;
-        this.kategoriRepo = kategoriRepo; // Inisialisasi repoKategori
+        this.kategoriRepo = kategoriRepo;
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
@@ -99,15 +96,14 @@ public class panelKategori extends JPanel implements KategoriDataChangeListener{
         table.getColumn("AKSI").setCellEditor(new ButtonEditor(new JCheckBox()));
     }
 
-    // ⬇️ UBAH INI UNTUK MENAMBAH KATEGORI VIA REPO
     private void showAddCategoryDialog(ActionEvent e) {
         JDialog dialog = new JDialog();
         dialog.setTitle("Add New Category");
-        dialog.setSize(400, 200); // Sesuaikan ukuran
+        dialog.setSize(400, 200);
         dialog.setModal(true);
         dialog.setLocationRelativeTo(this);
 
-        JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // Hanya nama kategori
+        JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         formPanel.add(new JLabel("Category Name:"));
@@ -121,8 +117,8 @@ public class panelKategori extends JPanel implements KategoriDataChangeListener{
                 JOptionPane.showMessageDialog(dialog, "Nama kategori tidak boleh kosong.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            kategoriRepo.addkategori(categoryName); // Tambah kategori via repoKategori
-            refreshCategoryData(); // Refresh tampilan tabel
+            kategoriRepo.addkategori(categoryName);
+            refreshCategoryData();
             dialog.dispose();
         });
 
@@ -133,7 +129,7 @@ public class panelKategori extends JPanel implements KategoriDataChangeListener{
 
     // Metode untuk memuat dan menampilkan data kategori dari repo
     public void refreshCategoryData() {
-        model.setRowCount(0); // Kosongkan tabel
+        model.setRowCount(0);
         for (kategori k : kategoriRepo.getCategories()) {
             model.addRow(new Object[]{k.getId(), k.getNama(), "Edit/Hapus"});
         }
@@ -214,20 +210,21 @@ public class panelKategori extends JPanel implements KategoriDataChangeListener{
     }
 
     private void deleteCategory(int row) {
-        int kategoriId = (int) model.getValueAt(row, 0); // Ambil ID dari tabel
+        int kategoriId = (int) model.getValueAt(row, 0);
         String categoryName = (String) model.getValueAt(row, 1);
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Hapus kategori " + categoryName + " dan semua menu yang masuk kategori ini?",
+                "Hapus kategori " + categoryName + ", semua supplier yang menyuplai kategori ini, dan semua menu yang terkait?", // Klarifikasi pesan
                 "Konfirmasi",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean deleted = kategoriRepo.deleteKategori(kategoriId); // Panggil delete dari repoKategori
+            boolean deleted = kategoriRepo.deleteKategori(kategoriId);
             if (deleted) {
-//                refreshCategoryData(); // Refresh tampilan tabel
                 JOptionPane.showMessageDialog(this, "Kategori berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-                mainAppFrame.getMenuPanel().refreshMenuData();
-                mainAppFrame.getKasirPanel().refreshMenuPanel();
+                // --- PENTING: Refresh semua panel yang terpengaruh ---
+                mainAppFrame.getMenuPanel().refreshMenuData(); // Menu mungkin berubah karena kategori atau supplier dihapus
+                mainAppFrame.getKasirPanel().refreshMenuPanel(); // Kasir juga berubah
+                mainAppFrame.getSupplierPanel().refreshSupplierData(); // <-- TAMBAHKAN INI: Supplier juga berubah
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menghapus kategori.", "Error", JOptionPane.ERROR_MESSAGE);
             }

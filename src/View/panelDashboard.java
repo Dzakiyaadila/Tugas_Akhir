@@ -1,10 +1,8 @@
 package View;
 
-import View.panelReport.panelReport;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
 public class panelDashboard extends JPanel {
     private final CardLayout cardLayout;

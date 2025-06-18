@@ -34,7 +34,7 @@ public class supplier {
     public String toCsvString() {
         // Format: id,nama,telepon,alamat,idKategori
         // Kita simpan ID kategorinya, bukan objek kategori, di CSV
-        return String.format("%d,%s,%s,%s,%d", id, nama, telepon, alamat, kategori.getId()); // <-- UBAH INI
+        return String.format("%d,%s,%s,%s,%d", id, nama, telepon, alamat, kategori.getId());
     }
 
     // method statis untuk membuat objek supplier dari baris CSV
@@ -47,12 +47,12 @@ public class supplier {
                 String nama = parts[1];
                 String telepon = parts[2];
                 String alamat = parts[3];
-                int kategoriId = Integer.parseInt(parts[4]); // <-- TAMBAHKAN INI
+                int kategoriId = Integer.parseInt(parts[4]);
 
                 // Cari objek kategori dari repoKategori
                 kategori associatedKategori = kategoriRepo.getId(kategoriId);
                 if (associatedKategori != null) {
-                    return new supplier(id, nama, telepon, alamat, associatedKategori); // <-- UBAH INI
+                    return new supplier(id, nama, telepon, alamat, associatedKategori);
                 } else {
                     System.err.println("Kategori dengan ID " + kategoriId + " tidak ditemukan untuk supplier: " + nama);
                 }

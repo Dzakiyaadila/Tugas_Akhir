@@ -1,13 +1,9 @@
 package View;
 
 import  CRUD.repoPaymentSettings;
-import Logic.PaymentSettings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.HashMap;
-import java.util.Map;
 
 public class panelPayment extends JPanel {
 
@@ -35,7 +31,7 @@ public class panelPayment extends JPanel {
         headerPanel.add(backButton, BorderLayout.WEST);
 
         // 2. Judul
-        JLabel headerLabel = new JLabel("Canteen!", SwingConstants.CENTER);
+        JLabel headerLabel = new JLabel("Metode Pembayaran", SwingConstants.CENTER);
         headerLabel.setFont(new Font("Arial", Font.BOLD, 24));
         headerLabel.setForeground(new Color(0, 120, 215));
         headerPanel.add(headerLabel, BorderLayout.CENTER);
@@ -49,13 +45,13 @@ public class panelPayment extends JPanel {
         paymentPanel.setBackground(new Color(240, 240, 240));
 
         // Tunai Card
-        boolean isTunaiActive = paymentSettingsRepo.isMethodActive("TUNAI");
-        JPanel tunaiCard = createToggleCard("Tunai", "💵", isTunaiActive);
+        boolean isTunaiActive = paymentSettingsRepo.isMethodActive("Cash");
+        JPanel tunaiCard = createToggleCard("Cash", "Tunai", "💵", isTunaiActive);
         paymentPanel.add(tunaiCard);
 
         // QRIS Card
         boolean isQrisActive = paymentSettingsRepo.isMethodActive("QRIS");
-        JPanel qrisCard = createToggleCard("QRIS", "📱", isQrisActive);
+        JPanel qrisCard = createToggleCard("QRIS", "QRIS", "📱", isQrisActive);
         paymentPanel.add(qrisCard);
 
         // Panel pembungkus untuk membuat payment methods lebih ke tengah
@@ -89,7 +85,7 @@ public class panelPayment extends JPanel {
         });
     }
 
-    private JPanel createToggleCard(String title, String emoji, boolean isActive) {
+    private JPanel createToggleCard(String methodNameKey, String displayTitle, String emoji, boolean isActive) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(isActive ? new Color(50, 200, 50) : new Color(200, 50, 50), 2),
@@ -102,7 +98,7 @@ public class panelPayment extends JPanel {
         JLabel emojiLabel = new JLabel(emoji, SwingConstants.CENTER);
         emojiLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
 
-        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel(displayTitle, SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
         JPanel centerPanel = new JPanel(new BorderLayout());
@@ -119,9 +115,9 @@ public class panelPayment extends JPanel {
         toggleBtn.setFocusPainted(false);
         toggleBtn.setBorderPainted(false);
 
-        if (title.equals("Tunai")) {
+        if (methodNameKey.equals("Cash")) {
             tunaiToggleBtn = toggleBtn;
-        } else if (title.equals("QRIS")) {
+        } else if (methodNameKey.equals("QRIS")) {
             qrisToggleBtn = toggleBtn;
         }
 
@@ -133,6 +129,9 @@ public class panelPayment extends JPanel {
                     BorderFactory.createLineBorder(selected ? new Color(50, 200, 50) : new Color(200, 50, 50), 2),
                     BorderFactory.createEmptyBorder(15, 15, 15, 15)
             ));
+            paymentSettingsRepo.addOrUpdateSetting(methodNameKey, selected); // Gunakan methodNameKey
+            // Beri tahu panelKasir untuk update tombolnya
+            mainAppFrame.getKasirPanel().updatePaymentButtonsStatus();
         });
 
         // Gabungkan Komponen Card
@@ -143,7 +142,7 @@ public class panelPayment extends JPanel {
     }
 
     public void refreshPaymentMethods() {
-        boolean isTunaiActive = paymentSettingsRepo.isMethodActive("TUNAI");
+        boolean isTunaiActive = paymentSettingsRepo.isMethodActive("Cash");
         if (tunaiToggleBtn != null) {
             tunaiToggleBtn.setSelected(isTunaiActive);
             tunaiToggleBtn.setText(isTunaiActive ? "ACTIVE" : "INACTIVE");

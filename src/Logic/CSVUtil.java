@@ -1,14 +1,9 @@
 package Logic;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 
 public class CSVUtil {
-
-    private static final String TRANSAKSI_FILE = "data/transaksi.csv";
 
     public static void simpanTransaksi(transaksi trx) {
         try (

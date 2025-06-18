@@ -1,11 +1,8 @@
 package CRUD;
 
-import Logic.CSVHelper;
 import Logic.PaymentSettings;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class repoPaymentSettings {
@@ -18,7 +15,7 @@ public class repoPaymentSettings {
         loadSettingsFromFile();
 
         if (settingsMap.isEmpty()) {
-            addOrUpdateSetting("TUNAI", true); // Default aktif
+            addOrUpdateSetting("Cash", true); // Default aktif
             addOrUpdateSetting("QRIS", true); // Default aktif
             saveSettingsToFile(); // Simpan default ke file
         }

@@ -2,6 +2,7 @@ package CRUD;
 
 import Logic.kategori;
 import Logic.menu;
+import Logic.supplier;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ public class repoKategori {
     private List<kategori> categories;
     private int nextId;
     private repoMenu menuRepo;
+    private repoSupplier supplierRepo;
     private List<KategoriDataChangeListener> kategoriListeners = new ArrayList<>();
 
     // Definisikan nama file CSV untuk kategori
@@ -35,9 +37,13 @@ public class repoKategori {
         }
     }
 
-    // setter untuk menuRepo
+    // == SETTER ==
     public void setMenuRepo(repoMenu menuRepo){
         this.menuRepo = menuRepo;
+    }
+
+    public void setSupplierRepo(repoSupplier supplierRepo) {
+        this.supplierRepo = supplierRepo;
     }
 
     // Metode untuk menambahkan listener
@@ -82,14 +88,12 @@ public class repoKategori {
         }
 
         // --- LOGIKA CASCADE DELETE KE MENU ---
-        // PASTIKAN menuRepo TIDAK NULL sebelum memanggilnya
         if (this.menuRepo != null) {
             System.out.println("repoKategori: Memulai cascade delete untuk kategori: " + kategoriToDelete.getNama());
             List<menu> allMenusBeforeDeletion = new ArrayList<>(menuRepo.getListMenu());
             List<menu> menusToDelete = new ArrayList<>();
 
             for (menu m : allMenusBeforeDeletion) {
-                // Pastikan m.getKategori() tidak null sebelum memanggil getId()
                 if (m.getKategori() != null && m.getKategori().getId() == kategoriToDelete.getId()) {
                     menusToDelete.add(m);
                 }
@@ -98,13 +102,37 @@ public class repoKategori {
             System.out.println("repoKategori: Ditemukan " + menusToDelete.size() + " menu yang terkait dengan kategori '" + kategoriToDelete.getNama() + "'.");
             for (menu m : menusToDelete) {
                 System.out.println("repoKategori: Menghapus menu: " + m.getNama() + " (ID: " + m.getId() + ")");
-                menuRepo.deleteMenu(m.getId()); // Panggil metode deleteMenu di repoMenu
+                menuRepo.deleteMenu(m.getId());
             }
         } else {
             System.err.println("repoKategori: menuRepo belum diinisialisasi untuk cascade delete kategori!");
         }
         // --- AKHIR LOGIKA CASCADE DELETE ---
 
+        // --- LOGIKA CASCADE DELETE KE SUPPLIER ---
+        if (this.supplierRepo != null) {
+            System.out.println("repoKategori: Memulai cascade delete supplier untuk kategori: " + kategoriToDelete.getNama());
+            List<supplier> allSuppliersBeforeDeletion = new ArrayList<>(supplierRepo.getSuppliers());
+            List<supplier> suppliersToDelete = new ArrayList<>();
+
+            for (supplier s : allSuppliersBeforeDeletion) {
+                if (s.getKategori() != null && s.getKategori().getId() == kategoriToDelete.getId()) {
+                    suppliersToDelete.add(s);
+                }
+            }
+
+            System.out.println("repoKategori: Ditemukan " + suppliersToDelete.size() + " supplier yang terkait dengan kategori '" + kategoriToDelete.getNama() + "'.");
+            for (supplier s : suppliersToDelete) {
+                System.out.println("repoKategori: Menghapus supplier: " + s.getNama() + " (ID: " + s.getId() + ")");
+                // Panggil metode deleteSupplier di repoSupplier
+                // Perhatikan: deleteSupplier di repoSupplier juga akan memicu cascade delete ke menu lagi
+                // Jadi, alur: Kategori -> Supplier -> Menu
+                supplierRepo.deleteSupplier(s.getId());
+            }
+        } else {
+            System.err.println("repoKategori: supplierRepo belum diinisialisasi untuk cascade delete supplier!");
+        }
+        // --- AKHIR LOGIKA CASCADE DELETE KE SUPPLIER ---
 
         boolean removed = categories.removeIf(kategori -> kategori.getId()==id);
         if (removed) {

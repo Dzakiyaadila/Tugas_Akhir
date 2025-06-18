@@ -6,7 +6,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.stream.Collectors;
 import java.util.List;
 import Logic.menu;
 import Logic.kategori;

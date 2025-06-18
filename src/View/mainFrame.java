@@ -2,12 +2,10 @@ package View;
 
 import View.panelKasir.panelKasir;
 import CRUD.*;
-import View.KategoriDataChangeListener;
 import View.panelReport.panelReport;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class mainFrame extends JFrame {
     private final CardLayout cardLayout = new CardLayout();
@@ -39,7 +37,9 @@ public class mainFrame extends JFrame {
         transaksiRepo = new repoTransaksi();
         reportPanel = new panelReport(cardLayout, cardPanel);
         paymentSettingsRepo = new repoPaymentSettings();
+
         kategoriRepo.setMenuRepo(menuRepo);
+        kategoriRepo.setSupplierRepo(supplierRepo);
 
         initializePanels();
         getContentPane().add(cardPanel, BorderLayout.CENTER);
@@ -103,10 +103,8 @@ public class mainFrame extends JFrame {
     public panelMenu getMenuPanel() {
         return menuPanelInstance;
     }
-    public panelSupplier getSupplierPanel() {
-        return supplierPanelInstance;
-    }
-    public panelPayment getPaymentPanel() { return paymentPanel; }
+    public panelSupplier getSupplierPanel() { return supplierPanelInstance; }
+
 
     public void logout() {
         this.dispose();

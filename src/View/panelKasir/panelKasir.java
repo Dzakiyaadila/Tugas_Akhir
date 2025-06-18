@@ -13,8 +13,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -189,7 +187,7 @@ public class panelKasir extends JPanel {
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         cashButton = new JButton("Tunai"); // Inisialisasi cashButton
         stylePaymentButton(cashButton, new Color(0, 180, 60));
-        cashButton.addActionListener(e -> processPayment("TUNAI"));
+        cashButton.addActionListener(e -> processPayment("Cash"));
         qrisButton = new JButton("QRIS"); // Inisialisasi qrisButton
         stylePaymentButton(qrisButton, new Color(0, 120, 215));
         qrisButton.addActionListener(e -> processPayment("QRIS"));
@@ -272,6 +270,11 @@ public class panelKasir extends JPanel {
             return;
         }
 
+        if (!paymentSettingsRepo.isMethodActive(paymentMethod)) { // Gunakan paymentMethod langsung sebagai key
+            JOptionPane.showMessageDialog(this, "Metode pembayaran '" + paymentMethod + "' tidak aktif. Silakan pilih metode lain atau aktifkan di pengaturan.", "Pembayaran Tidak Aktif", JOptionPane.WARNING_MESSAGE);
+            return; // Hentikan proses jika metode tidak aktif
+        }
+
         double total = currentOrder.stream().mapToDouble(oi -> oi.getHarga() * oi.getJumlah()).sum();
 
         int confirm = JOptionPane.showConfirmDialog(this,
@@ -284,8 +287,8 @@ public class panelKasir extends JPanel {
             String paymentId = "PAY-" + System.currentTimeMillis();
             payment paymentInstance = null;
 
-            switch (paymentMethod) {
-                case "TUNAI":
+            switch (paymentMethod) { // 'paymentMethod' adalah key ("Cash" atau "QRIS")
+                case "Cash": // Case sesuai key "Cash"
                     paymentInstance = new CashPayment(paymentId, total);
                     break;
                 case "QRIS":
@@ -310,7 +313,7 @@ public class panelKasir extends JPanel {
                             menuRepo.updateStok(itemMenu.getId(), itemMenu.getStok() - oi.getJumlah());
                         }
                     }
-                    saveTransaction(paymentMethod);
+                    saveTransaction(paymentMethod); // Gunakan key method
                     JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                     resetOrder();
                     refreshMenuPanel();
@@ -321,13 +324,13 @@ public class panelKasir extends JPanel {
         }
     }
 
-    private void saveTransaction(String metode) {
+    private void saveTransaction(String metode) { // metode ini adalah key ("Cash" atau "QRIS")
         int userId = 1;
         double total = currentOrder.stream().mapToDouble(oi -> oi.getHarga() * oi.getJumlah()).sum();
 
         List<transaksiDetail> detailList = new ArrayList<>();
         for (OrderItem oi : currentOrder) {
-            Logic.menu associatedMenu = menuRepo.getListMenu().stream()
+            menu associatedMenu = menuRepo.getListMenu().stream()
                     .filter(m -> m.getNama().equals(oi.getNama()))
                     .findFirst()
                     .orElse(null);
@@ -340,6 +343,7 @@ public class panelKasir extends JPanel {
         Logic.transaksi trx = new Logic.transaksi(userId, total, metode, detailList);
         transaksiRepo.saveTransaksi(trx);
     }
+
 
     private JPanel createFooterPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -359,7 +363,7 @@ public class panelKasir extends JPanel {
     }
 
     public void refreshMenuPanel() {
-        System.out.println("refreshMenuPanel() called in panelKasir. Rebuilding menu UI.");
+        System.out.println("refreshMenuPanel() called in panelKasir. Rebuilding menu UI...");
 
         Component centerComponent = getComponent(1);
 
@@ -385,10 +389,9 @@ public class panelKasir extends JPanel {
         updatePaymentButtonsStatus(); // Panggil di sini juga
     }
 
-    // Metode baru untuk memperbarui status tombol pembayaran
     public void updatePaymentButtonsStatus() {
-        if (cashButton != null) {
-            boolean cashActive = paymentSettingsRepo.isMethodActive("TUNAI");
+        if (cashButton != null) { // Pastikan tombol sudah diinisialisasi
+            boolean cashActive = paymentSettingsRepo.isMethodActive("Cash");
             cashButton.setEnabled(cashActive);
             if (cashActive) {
                 stylePaymentButton(cashButton, new Color(0, 180, 60));
@@ -405,8 +408,9 @@ public class panelKasir extends JPanel {
                 stylePaymentButton(qrisButton, new Color(150, 150, 150));
             }
         }
-        System.out.println("Payment buttons updated. Cash active: " + paymentSettingsRepo.isMethodActive("TUNAI") + ", QRIS active: " + paymentSettingsRepo.isMethodActive("QRIS"));
+        System.out.println("Payment buttons updated. Cash active: " + paymentSettingsRepo.isMethodActive("Cash") + ", QRIS active: " + paymentSettingsRepo.isMethodActive("QRIS"));
     }
+
 
 
     private void handleOrderItemClick(int index) {
