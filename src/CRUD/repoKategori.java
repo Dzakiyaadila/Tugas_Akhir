@@ -22,14 +22,14 @@ public class repoKategori {
     public repoKategori(){
         categories = new ArrayList<>();
         // Coba muat kategori dari file saat inisialisasi
-        loadCategoriesFromFile(); //
+        loadCategoriesFromFile();
 
         // Jika tidak ada kategori yang dimuat (file tidak ada atau kosong), inisialisasi default
-        if (categories.isEmpty()) { //
+        if (categories.isEmpty()) {
             this.nextId = 1;
-            addkategori("Makanan"); // Memanggil addkategori, yang akan memicu save dan notifikasi
-            addkategori("Minuman"); //
-            addkategori("Alat Tulis"); //
+            addkategori("Makanan");
+            addkategori("Minuman");
+            addkategori("Alat Tulis");
             // Tidak perlu memanggil saveCategoriesToFile() lagi di sini karena addkategori() sudah melakukannya
         } else {
             // Jika ada kategori yang dimuat, tentukan nextId berdasarkan ID tertinggi yang ada
@@ -126,7 +126,7 @@ public class repoKategori {
                 System.out.println("repoKategori: Menghapus supplier: " + s.getNama() + " (ID: " + s.getId() + ")");
                 // Panggil metode deleteSupplier di repoSupplier
                 // Perhatikan: deleteSupplier di repoSupplier juga akan memicu cascade delete ke menu lagi
-                // Jadi, alur: Kategori -> Supplier -> Menu
+                // Jadi alurny: Kategori -> Supplier -> Menu
                 supplierRepo.deleteSupplier(s.getId());
             }
         } else {
@@ -145,7 +145,7 @@ public class repoKategori {
         return false;
     }
 
-    // read kategori by ID
+    // read untuk kategori by ID
     public kategori getId(int id){
         for (kategori kategori : categories){
             if(kategori.getId() == id){
